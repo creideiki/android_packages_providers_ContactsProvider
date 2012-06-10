@@ -16,32 +16,28 @@
 
 package com.android.providers.contacts;
 
-import com.android.internal.content.SyncStateContentProviderHelper;
-import com.android.providers.contacts.ContactLookupKey.LookupKeySegment;
-import com.android.providers.contacts.ContactsDatabaseHelper.AggregatedPresenceColumns;
-import com.android.providers.contacts.ContactsDatabaseHelper.AggregationExceptionColumns;
-import com.android.providers.contacts.ContactsDatabaseHelper.Clauses;
-import com.android.providers.contacts.ContactsDatabaseHelper.ContactsColumns;
-import com.android.providers.contacts.ContactsDatabaseHelper.ContactsStatusUpdatesColumns;
-import com.android.providers.contacts.ContactsDatabaseHelper.DataColumns;
-import com.android.providers.contacts.ContactsDatabaseHelper.GroupsColumns;
-import com.android.providers.contacts.ContactsDatabaseHelper.MimetypesColumns;
-import com.android.providers.contacts.ContactsDatabaseHelper.NameLookupColumns;
-import com.android.providers.contacts.ContactsDatabaseHelper.NameLookupType;
-import com.android.providers.contacts.ContactsDatabaseHelper.PhoneColumns;
-import com.android.providers.contacts.ContactsDatabaseHelper.PhoneLookupColumns;
-import com.android.providers.contacts.ContactsDatabaseHelper.PresenceColumns;
-import com.android.providers.contacts.ContactsDatabaseHelper.RawContactsColumns;
-import com.android.providers.contacts.ContactsDatabaseHelper.SettingsColumns;
-import com.android.providers.contacts.ContactsDatabaseHelper.StatusUpdatesColumns;
-import com.android.providers.contacts.ContactsDatabaseHelper.Tables;
-import com.google.android.collect.Lists;
-import com.google.android.collect.Maps;
-import com.google.android.collect.Sets;
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.OnAccountsUpdateListener;
+import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -73,6 +69,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.MemoryFile;
 import android.os.RemoteException;
@@ -83,10 +80,17 @@ import android.pim.vcard.VCardConfig;
 import android.preference.PreferenceManager;
 import android.provider.BaseColumns;
 import android.provider.ContactsContract;
-import android.provider.LiveFolders;
-import android.provider.OpenableColumns;
-import android.provider.SyncStateContract;
 import android.provider.ContactsContract.AggregationExceptions;
+import android.provider.ContactsContract.CommonDataKinds.BaseTypes;
+import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.GroupMembership;
+import android.provider.ContactsContract.CommonDataKinds.Im;
+import android.provider.ContactsContract.CommonDataKinds.Nickname;
+import android.provider.ContactsContract.CommonDataKinds.Organization;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.CommonDataKinds.Photo;
+import android.provider.ContactsContract.CommonDataKinds.StructuredName;
+import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
 import android.provider.ContactsContract.ContactCounts;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Data;
@@ -101,35 +105,35 @@ import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.SearchSnippetColumns;
 import android.provider.ContactsContract.Settings;
 import android.provider.ContactsContract.StatusUpdates;
-import android.provider.ContactsContract.CommonDataKinds.BaseTypes;
-import android.provider.ContactsContract.CommonDataKinds.Email;
-import android.provider.ContactsContract.CommonDataKinds.GroupMembership;
-import android.provider.ContactsContract.CommonDataKinds.Im;
-import android.provider.ContactsContract.CommonDataKinds.Nickname;
-import android.provider.ContactsContract.CommonDataKinds.Organization;
-import android.provider.ContactsContract.CommonDataKinds.Phone;
-import android.provider.ContactsContract.CommonDataKinds.Photo;
-import android.provider.ContactsContract.CommonDataKinds.StructuredName;
-import android.provider.ContactsContract.CommonDataKinds.StructuredPostal;
+import android.provider.LiveFolders;
+import android.provider.OpenableColumns;
+import android.provider.SyncStateContract;
 import android.telephony.PhoneNumberUtils;
 import android.text.TextUtils;
 import android.util.Log;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
+import com.android.internal.content.SyncStateContentProviderHelper;
+import com.android.providers.contacts.ContactLookupKey.LookupKeySegment;
+import com.android.providers.contacts.ContactsDatabaseHelper.AggregatedPresenceColumns;
+import com.android.providers.contacts.ContactsDatabaseHelper.AggregationExceptionColumns;
+import com.android.providers.contacts.ContactsDatabaseHelper.Clauses;
+import com.android.providers.contacts.ContactsDatabaseHelper.ContactsColumns;
+import com.android.providers.contacts.ContactsDatabaseHelper.ContactsStatusUpdatesColumns;
+import com.android.providers.contacts.ContactsDatabaseHelper.DataColumns;
+import com.android.providers.contacts.ContactsDatabaseHelper.GroupsColumns;
+import com.android.providers.contacts.ContactsDatabaseHelper.MimetypesColumns;
+import com.android.providers.contacts.ContactsDatabaseHelper.NameLookupColumns;
+import com.android.providers.contacts.ContactsDatabaseHelper.NameLookupType;
+import com.android.providers.contacts.ContactsDatabaseHelper.PhoneColumns;
+import com.android.providers.contacts.ContactsDatabaseHelper.PhoneLookupColumns;
+import com.android.providers.contacts.ContactsDatabaseHelper.PresenceColumns;
+import com.android.providers.contacts.ContactsDatabaseHelper.RawContactsColumns;
+import com.android.providers.contacts.ContactsDatabaseHelper.SettingsColumns;
+import com.android.providers.contacts.ContactsDatabaseHelper.StatusUpdatesColumns;
+import com.android.providers.contacts.ContactsDatabaseHelper.Tables;
+import com.google.android.collect.Lists;
+import com.google.android.collect.Maps;
+import com.google.android.collect.Sets;
 
 /**
  * Contacts content provider. The contract between this provider and applications
@@ -4192,12 +4196,35 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         return false;
     }
 
+    private String getProcessNameFromPid(int givenPid)
+    {
+       ActivityManager am = (ActivityManager)
+          getContext().getSystemService(Activity.ACTIVITY_SERVICE);
+
+       List<ActivityManager.RunningAppProcessInfo> lstAppInfo =
+          am.getRunningAppProcesses();
+
+       for(ActivityManager.RunningAppProcessInfo ai : lstAppInfo) {
+          if (ai.pid == givenPid) {
+             return ai.processName;
+          }
+       }
+       return null;
+    }
+
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
             String sortOrder) {
         if (VERBOSE_LOGGING) {
             Log.v(TAG, "query: " + uri);
         }
+
+        Log.i(TAG, "Query from: " + getProcessNameFromPid(Binder.getCallingPid()));
+        Log.i(TAG, "   URI: " + uri.toString());
+        Log.i(TAG, "   Projection: " + Arrays.toString(projection));
+        Log.i(TAG, "   Selection: " + selection);
+        Log.i(TAG, "   Selection arguments: " + Arrays.toString(selectionArgs));
+        Log.i(TAG, "   Sort order: " + sortOrder);
 
         final SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
