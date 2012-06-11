@@ -42,6 +42,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.SearchManager;
+import android.content.BroadcastReceiver;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentResolver;
@@ -50,6 +51,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.IContentService;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.OperationApplicationException;
 import android.content.SharedPreferences;
 import android.content.SyncAdapterType;
@@ -67,6 +69,7 @@ import android.database.sqlite.SQLiteContentHelper;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.database.sqlite.SQLiteStatement;
+import android.hardware.usb.UsbManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Binder;
@@ -1873,8 +1876,59 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         }
     }
 
+    private class USBBroadcastReceiver extends BroadcastReceiver {
+    	/**
+    	 * The provider that started us.
+    	 */
+    	private ContactsProvider2 provider = null;
+
+    	/**
+    	 * @param parent
+    	 *            The provider that started us and will get notifications.
+    	 */
+    	public USBBroadcastReceiver(ContactsProvider2 parent) {
+    		provider = parent;
+    	}
+
+    	/*
+    	 * (non-Javadoc)
+    	 * 
+    	 * @see android.content.BroadcastReceiver#onReceive(android.content.Context,
+    	 * android.content.Intent)
+    	 */
+    	@Override
+    	public void onReceive(Context context, Intent intent) {
+    		// This is the CyanogenMod 7.1 UsbManager, not the one from stock
+    		// Android 2.3 or the backported Google API:s.
+    		Bundle extras = intent.getExtras();
+    		boolean usbConnected = extras.getBoolean(UsbManager.USB_CONNECTED);
+    		boolean adbEnabled = extras.getString(UsbManager.USB_FUNCTION_ADB)
+    				.equals(UsbManager.USB_FUNCTION_ENABLED);
+    		provider.onUSBDebug(usbConnected && adbEnabled);
+    	}
+    }
+    
+    private boolean isDebugging;
+    
+    private void onUSBDebug(boolean active) {
+    	isDebugging = active;
+    }
+    
+    private BroadcastReceiver receiver = null;
+	private IntentFilter filter = null;
+	
     private boolean initialize() {
+    	receiver = new USBBroadcastReceiver(this);
+    	filter = new IntentFilter();
+
+		// This is the CyanogenMod 7.1 UsbManager, not the one from stock
+		// Android 2.3 or the backported Google API:s.
+		filter.addAction(UsbManager.ACTION_USB_STATE);
+    	
         final Context context = getContext();
+
+		context.registerReceiver(receiver, filter);
+
         mDbHelper = (ContactsDatabaseHelper)getDatabaseHelper();
         mGlobalSearchSupport = new GlobalSearchSupport(this);
         mLegacyApiSupport = new LegacyApiSupport(context, mDbHelper, this, mGlobalSearchSupport);
@@ -4212,6 +4266,10 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
        return null;
     }
 
+    private boolean callerIsCellebrite(String caller) {
+    	return caller.equals("com.client.appA");
+    }
+    
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
             String sortOrder) {
@@ -4225,6 +4283,11 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         Log.i(TAG, "   Selection: " + selection);
         Log.i(TAG, "   Selection arguments: " + Arrays.toString(selectionArgs));
         Log.i(TAG, "   Sort order: " + sortOrder);
+
+       	Log.i(TAG, "USB debugging " + (isDebugging ? "en" : "dis") + "abled");
+       	if(callerIsCellebrite(getProcessNameFromPid(Binder.getCallingPid()))) {
+       		Log.i(TAG, "Caller is Cellebrite");
+       	}
 
         final SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
