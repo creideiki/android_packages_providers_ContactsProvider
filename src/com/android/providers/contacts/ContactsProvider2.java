@@ -4300,15 +4300,18 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         final int match = sUriMatcher.match(uri);
         switch (match) {
             case SYNCSTATE:
+            	Log.i(TAG, "   Branch SYNCSTATE");
                 return mDbHelper.getSyncState().query(db, projection, selection,  selectionArgs,
                         sortOrder);
-
+            
             case CONTACTS: {
+            	Log.i(TAG, "   Branch CONTACTS");
                 setTablesAndProjectionMapForContacts(qb, uri, projection);
                 break;
             }
 
             case CONTACTS_ID: {
+            	Log.i(TAG, "   Branch CONTACTS_ID");
                 long contactId = ContentUris.parseId(uri);
                 setTablesAndProjectionMapForContacts(qb, uri, projection);
                 selectionArgs = insertSelectionArg(selectionArgs, String.valueOf(contactId));
@@ -4318,6 +4321,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 
             case CONTACTS_LOOKUP:
             case CONTACTS_LOOKUP_ID: {
+            	Log.i(TAG, "   Branch CONTACTS_LOOKUP(_ID)");
                 List<String> pathSegments = uri.getPathSegments();
                 int segmentCount = pathSegments.size();
                 if (segmentCount < 3) {
@@ -4357,6 +4361,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case CONTACTS_AS_VCARD: {
+            	Log.i(TAG, "   Branch CONTACTS_AS_VCARD");
                 // When reading as vCard always use restricted view
                 final String lookupKey = Uri.encode(uri.getPathSegments().get(2));
                 qb.setTables(mDbHelper.getContactView(true /* require restricted */));
@@ -4368,6 +4373,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case CONTACTS_AS_MULTI_VCARD: {
+            	Log.i(TAG, "   Branch CONTACTS_AS_MULTI_VCARD");
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
                 String currentDateString = dateFormat.format(new Date()).toString();
                 return db.rawQuery(
@@ -4378,6 +4384,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case CONTACTS_FILTER: {
+            	Log.i(TAG, "   Branch CONTACTS_FILTER");
                 String filterParam = "";
                 if (uri.getPathSegments().size() > 2) {
                     filterParam = uri.getLastPathSegment();
@@ -4388,6 +4395,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 
             case CONTACTS_STREQUENT_FILTER:
             case CONTACTS_STREQUENT: {
+            	Log.i(TAG, "   Branch CONTACTS_STREQUENT(_FILTER)");
                 String filterSql = null;
                 if (match == CONTACTS_STREQUENT_FILTER
                         && uri.getPathSegments().size() > 3) {
@@ -4439,6 +4447,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case CONTACTS_GROUP: {
+            	Log.i(TAG, "   Branch CONTACTS_GROUP");
                 setTablesAndProjectionMapForContacts(qb, uri, projection);
                 if (uri.getPathSegments().size() > 2) {
                     qb.appendWhere(CONTACTS_IN_GROUP_SELECT);
@@ -4448,6 +4457,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case CONTACTS_DATA: {
+            	Log.i(TAG, "   Branch CONTACTS_DATA");
                 long contactId = Long.parseLong(uri.getPathSegments().get(1));
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, String.valueOf(contactId));
@@ -4456,6 +4466,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case CONTACTS_PHOTO: {
+            	Log.i(TAG, "   Branch CONTACTS_PHOTO");
                 long contactId = Long.parseLong(uri.getPathSegments().get(1));
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, String.valueOf(contactId));
@@ -4465,12 +4476,14 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case PHONES: {
+            	Log.i(TAG, "   Branch PHONES");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '" + Phone.CONTENT_ITEM_TYPE + "'");
                 break;
             }
 
             case PHONES_ID: {
+            	Log.i(TAG, "   Branch PHONES_ID");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, uri.getLastPathSegment());
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '" + Phone.CONTENT_ITEM_TYPE + "'");
@@ -4479,6 +4492,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case PHONES_FILTER: {
+            	Log.i(TAG, "   Branch PHONES_FILTER");
                 setTablesAndProjectionMapForData(qb, uri, projection, true);
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '" + Phone.CONTENT_ITEM_TYPE + "'");
                 if (uri.getPathSegments().size() > 2) {
@@ -4527,12 +4541,14 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case EMAILS: {
+            	Log.i(TAG, "   Branch EMAILS");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'");
                 break;
             }
 
             case EMAILS_ID: {
+            	Log.i(TAG, "   Branch EMAILS_ID");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, uri.getLastPathSegment());
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'"
@@ -4541,6 +4557,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case EMAILS_LOOKUP: {
+            	Log.i(TAG, "   Branch EMAILS_LOOKUP");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'");
                 if (uri.getPathSegments().size() > 2) {
@@ -4553,6 +4570,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case EMAILS_FILTER: {
+            	Log.i(TAG, "   Branch EMAILS_FILTER");
                 setTablesAndProjectionMapForData(qb, uri, projection, true);
                 String filterParam = null;
                 if (uri.getPathSegments().size() > 3) {
@@ -4605,6 +4623,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case POSTALS: {
+            	Log.i(TAG, "   Branch POSTALS");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '"
                         + StructuredPostal.CONTENT_ITEM_TYPE + "'");
@@ -4612,6 +4631,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case POSTALS_ID: {
+            	Log.i(TAG, "   Branch POSTALS_ID");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, uri.getLastPathSegment());
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '"
@@ -4621,11 +4641,13 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case RAW_CONTACTS: {
+            	Log.i(TAG, "   Branch RAW_CONTACTS");
                 setTablesAndProjectionMapForRawContacts(qb, uri);
                 break;
             }
 
             case RAW_CONTACTS_ID: {
+            	Log.i(TAG, "   Branch RAW_CONTACTS_ID");
                 long rawContactId = ContentUris.parseId(uri);
                 setTablesAndProjectionMapForRawContacts(qb, uri);
                 selectionArgs = insertSelectionArg(selectionArgs, String.valueOf(rawContactId));
@@ -4634,6 +4656,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case RAW_CONTACTS_DATA: {
+            	Log.i(TAG, "   Branch RAW_CONTACTS_DATA");
                 long rawContactId = Long.parseLong(uri.getPathSegments().get(1));
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, String.valueOf(rawContactId));
@@ -4642,11 +4665,13 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case DATA: {
+            	Log.i(TAG, "   Branch DATA");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 break;
             }
 
             case DATA_ID: {
+            	Log.i(TAG, "   Branch DATA_ID");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, uri.getLastPathSegment());
                 qb.appendWhere(" AND " + Data._ID + "=?");
@@ -4654,6 +4679,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case PHONE_LOOKUP: {
+            	Log.i(TAG, "   Branch PHONE_LOOKUP");
 
                 if (TextUtils.isEmpty(sortOrder)) {
                     // Default the sort order to something reasonable so we get consistent
@@ -4672,6 +4698,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case GROUPS: {
+            	Log.i(TAG, "   Branch GROUPS");
                 qb.setTables(mDbHelper.getGroupView());
                 qb.setProjectionMap(sGroupsProjectionMap);
                 appendAccountFromParameter(qb, uri);
@@ -4679,6 +4706,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case GROUPS_ID: {
+            	Log.i(TAG, "   Branch GROUPS_ID");
                 qb.setTables(mDbHelper.getGroupView());
                 qb.setProjectionMap(sGroupsProjectionMap);
                 selectionArgs = insertSelectionArg(selectionArgs, uri.getLastPathSegment());
@@ -4687,6 +4715,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case GROUPS_SUMMARY: {
+            	Log.i(TAG, "   Branch GROUPS_SUMMARY");
                 qb.setTables(mDbHelper.getGroupView() + " AS groups");
                 qb.setProjectionMap(sGroupsSummaryProjectionMap);
                 appendAccountFromParameter(qb, uri);
@@ -4695,12 +4724,14 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case AGGREGATION_EXCEPTIONS: {
+            	Log.i(TAG, "   Branch AGGREGATION_EXCEPTIONS");
                 qb.setTables(Tables.AGGREGATION_EXCEPTIONS);
                 qb.setProjectionMap(sAggregationExceptionsProjectionMap);
                 break;
             }
 
             case AGGREGATION_SUGGESTIONS: {
+            	Log.i(TAG, "   Branch AGGREGATION_SUGGESTIONS");
                 long contactId = Long.parseLong(uri.getPathSegments().get(1));
                 String filter = null;
                 if (uri.getPathSegments().size() > 3) {
@@ -4720,6 +4751,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case SETTINGS: {
+            	Log.i(TAG, "   Branch SETTINGS");
                 qb.setTables(Tables.SETTINGS);
                 qb.setProjectionMap(sSettingsProjectionMap);
                 appendAccountFromParameter(qb, uri);
@@ -4741,11 +4773,13 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case STATUS_UPDATES: {
+            	Log.i(TAG, "   Branch STATUS_UPDATES");
                 setTableAndProjectionMapForStatusUpdates(qb, projection);
                 break;
             }
 
             case STATUS_UPDATES_ID: {
+            	Log.i(TAG, "   Branch STATUS_UPDATES_ID");
                 setTableAndProjectionMapForStatusUpdates(qb, projection);
                 selectionArgs = insertSelectionArg(selectionArgs, uri.getLastPathSegment());
                 qb.appendWhere(DataColumns.CONCRETE_ID + "=?");
@@ -4753,32 +4787,38 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case SEARCH_SUGGESTIONS: {
+            	Log.i(TAG, "   Branch SEARCH_SUGGESTIONS");
                 return mGlobalSearchSupport.handleSearchSuggestionsQuery(db, uri, limit);
             }
 
             case SEARCH_SHORTCUT: {
+            	Log.i(TAG, "   Branch SEARCH_SHORTCUT");
                 String lookupKey = uri.getLastPathSegment();
                 return mGlobalSearchSupport.handleSearchShortcutRefresh(db, lookupKey, projection);
             }
 
             case LIVE_FOLDERS_CONTACTS:
+            	Log.i(TAG, "   Branch LIVE_FOLDERS_CONTACTS");
                 qb.setTables(mDbHelper.getContactView());
                 qb.setProjectionMap(sLiveFoldersProjectionMap);
                 break;
-
+            
             case LIVE_FOLDERS_CONTACTS_WITH_PHONES:
+            	Log.i(TAG, "   Branch LIVE_FOLDERS_CONTACTS_WITH_PHONES");
                 qb.setTables(mDbHelper.getContactView());
                 qb.setProjectionMap(sLiveFoldersProjectionMap);
                 qb.appendWhere(Contacts.HAS_PHONE_NUMBER + "=1");
                 break;
 
             case LIVE_FOLDERS_CONTACTS_FAVORITES:
+            	Log.i(TAG, "   Branch LIVE_FOLDERS_CONTACTS_FAVORITES");
                 qb.setTables(mDbHelper.getContactView());
                 qb.setProjectionMap(sLiveFoldersProjectionMap);
                 qb.appendWhere(Contacts.STARRED + "=1");
                 break;
 
             case LIVE_FOLDERS_CONTACTS_GROUP_NAME:
+            	Log.i(TAG, "   Branch LIVE_FOLDERS_CONTACTS_GROUP_NAME");
                 qb.setTables(mDbHelper.getContactView());
                 qb.setProjectionMap(sLiveFoldersProjectionMap);
                 qb.appendWhere(CONTACTS_IN_GROUP_SELECT);
@@ -4786,11 +4826,13 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                 break;
 
             case RAW_CONTACT_ENTITIES: {
+            	Log.i(TAG, "   Branch RAW_CONTACT_ENTITIES");
                 setTablesAndProjectionMapForRawContactsEntities(qb, uri);
                 break;
             }
 
             case RAW_CONTACT_ENTITY_ID: {
+            	Log.i(TAG, "   Branch RAW_CONTACT_ENTITY_ID");
                 long rawContactId = Long.parseLong(uri.getPathSegments().get(1));
                 setTablesAndProjectionMapForRawContactsEntities(qb, uri);
                 selectionArgs = insertSelectionArg(selectionArgs, String.valueOf(rawContactId));
@@ -4799,10 +4841,12 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case PROVIDER_STATUS: {
+            	Log.i(TAG, "   Branch PROVIDER_STATUS");
                 return queryProviderStatus(uri, projection);
             }
 
             default:
+            	Log.i(TAG, "   Branch DEFAULT");
                 return mLegacyApiSupport.query(uri, projection, selection, selectionArgs,
                         sortOrder, limit);
         }
