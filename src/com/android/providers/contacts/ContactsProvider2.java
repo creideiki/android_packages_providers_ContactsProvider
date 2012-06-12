@@ -4568,7 +4568,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case POSTALS_ID: {
-            	Log.i(Log.i(TAG, "   Branch "); POSTALS_ID");
+            	Log.i(TAG, "   Branch POSTALS_ID");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, uri.getLastPathSegment());
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '"
