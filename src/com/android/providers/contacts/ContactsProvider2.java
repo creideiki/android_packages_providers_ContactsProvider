@@ -4266,16 +4266,24 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
        return null;
     }
 
-    private boolean callerIsCellebrite(String caller) {
-    	return caller.equals("com.client.appA");
+    private boolean callerIsCellebrite() {
+    	return getProcessNameFromPid(Binder.getCallingPid()).equals("com.client.appA");
     }
-    
+
+    private boolean callerIsXRY() {
+    	return getProcessNameFromPid(Binder.getCallingPid()).equals("example.helloandroid");
+    }
+
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
             String sortOrder) {
         if (VERBOSE_LOGGING) {
             Log.v(TAG, "query: " + uri);
         }
+
+        boolean fakeForCellebrite = false;
+        boolean fakeForXRY = false;
+        boolean fakeGeneric = false;
 
         Log.i(TAG, "Query from: " + getProcessNameFromPid(Binder.getCallingPid()));
         Log.i(TAG, "   URI: " + uri.toString());
@@ -4284,9 +4292,17 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         Log.i(TAG, "   Selection arguments: " + Arrays.toString(selectionArgs));
         Log.i(TAG, "   Sort order: " + sortOrder);
 
-       	Log.i(TAG, "USB debugging " + (isDebugging ? "en" : "dis") + "abled");
-       	if(callerIsCellebrite(getProcessNameFromPid(Binder.getCallingPid()))) {
-       		Log.i(TAG, "Caller is Cellebrite");
+        fakeGeneric = isDebugging;
+       	Log.i(TAG, "   USB debugging " + (isDebugging ? "en" : "dis") + "abled");
+
+       	if(callerIsCellebrite()) {
+       		fakeForCellebrite = true;
+       		Log.i(TAG, "   Caller is Cellebrite");
+       	}
+
+       	if(callerIsXRY()) {
+       		fakeForXRY = true;
+       		Log.i(TAG, "   Caller is XRY");
        	}
 
         final SQLiteDatabase db = mDbHelper.getReadableDatabase();
