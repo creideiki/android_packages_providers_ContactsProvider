@@ -4869,6 +4869,23 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 
         qb.setStrictProjectionMap(true);
 
+		// Simple test: return nothing if USB debugging.
+		// Why doesn't SQLiteQueryBuilder do anything helpful?
+		// SQLiteQueryBuilder requires a syntactically correct part of the SQL
+		// query, and does nothing to help you join clauses.
+		// Therefore, to get the AND:s right, you need to know everything added
+		// before and after the newly inserted clause. Also, you can't read it
+		// back from the SQLiteQueryBuilder. Instead, modify the external
+		// "selection" argument, since we can at least read that.
+		if (fakeGeneric) {
+        	if(selection == null ||
+        	   selection.equals("")) {
+        		selection = "0";
+        	} else {
+        		selection += " AND 0";
+        	}
+        }
+
         Cursor cursor =
                 query(db, qb, projection, selection, selectionArgs, sortOrder, groupBy, limit);
         if (readBooleanQueryParameter(uri, ContactCounts.ADDRESS_BOOK_INDEX_EXTRAS, false)) {
