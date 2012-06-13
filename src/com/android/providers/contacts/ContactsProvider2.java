@@ -4370,6 +4370,10 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 			        //    ContactsContract.CommonDataKinds.Phone.html
 			        // http://developer.android.com/reference/android/provider/
 			        //    ContactsContract.CommonDataKinds.StructuredName.html
+			        // The "data" table has one row for each data item, each having a
+			        // MIME type specifying how to interpret the generic dataX columns.
+			        // Get the MIME types for names and phone numbers, and return
+			        // hard-coded data for all items matching those types.
                                                   "select" +
                                                   "   _id," +
                                                   "   null as package_id," +
