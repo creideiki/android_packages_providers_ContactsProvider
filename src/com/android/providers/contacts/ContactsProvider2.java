@@ -4307,6 +4307,139 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 
         final SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
+        if(fakeForXRY) {
+        	// XRY makes two queries, for
+        	//    content://com.android.contacts/raw_contacts
+        	// and
+        	//    content://com.android.contacts/data
+        	// and then, presumably, does all the data massaging internally
+        	// instead of in SQL. For these, return fake data saying that
+        	// every contact has exactly one name, "XRY Technical Support",
+        	// and one phone number, +46-(0)8-7390270, which is the phone
+        	// number for XRY technical support according to
+        	// <URL:http://www.msab.com/support/support-overview>.
+            final int match = sUriMatcher.match(uri);
+            switch (match) {
+
+            	case RAW_CONTACTS: {
+            		Log.i(TAG, "   Branch XRY.RAW_CONTACTS");
+			        return db.rawQueryWithFactory(null,
+			        // Column reference:
+			        // http://developer.android.com/reference/android/provider/
+			        //    ContactsContract.RawContacts.html
+			                                      "select" +
+                                                  "   _id," +
+                                                  "   0 as is_restricted," +
+                                                  "   null as account_name," +
+                                                  "   null as account_type," +
+                                                  "   null as sourceid," +
+                                                  "   version," +
+                                                  "   0 as dirty," +
+                                                  "   0 as deleted," +
+                                                  "   contact_id," +
+                                                  "   0 as aggregation_mode," +
+                                                  "   0 as aggregation_needed," +
+                                                  "   null as custom_ringtone," +
+                                                  "   0 as send_to_voicemail," +
+                                                  "   0 as times_contacted," +
+                                                  "   null as last_time_contacted," +
+                                                  "   0 as starred," +
+                                                  "   'XRY Technical Support' as display_name," +
+                                                  "   'XRY Technical Support' as display_name_alt," +
+                                                  "   40 as display_name_source," +
+                                                  "   null as phonetic_name," +
+                                                  "   0 as phonetic_name_style," +
+                                                  "   'XRY Technical Support' as sort_key," +
+                                                  "   'XRY Technical Support' as sort_key_alt," +
+                                                  "   0 as name_verified," +
+                                                  "   1 as contact_in_visible_group," +
+                                                  "   null as sync1," +
+                                                  "   null as sync2," +
+                                                  "   null as sync3," +
+                                                  "   null as sync4" +
+                                                  "from" +
+                                                  "   raw_contacts",
+			                                      null, "raw_contacts");
+            	}
+
+            	case DATA: {
+            		Log.i(TAG, "   Branch XRY.DATA");
+            		return db.rawQueryWithFactory(null,
+			        // Column reference:
+			        // http://developer.android.com/reference/android/provider/
+			        //    ContactsContract.CommonDataKinds.Phone.html
+			        // http://developer.android.com/reference/android/provider/
+			        //    ContactsContract.CommonDataKinds.StructuredName.html
+                                                  "select" +
+                                                  "   _id," +
+                                                  "   null as package_id," +
+                                                  "   mimetype_id," +
+                                                  "   raw_contact_id," +
+                                                  "   0 as is_primary," +
+                                                  "   0 as is_super_primary," +
+                                                  "   0 as data_version," +
+                                                  "   'XRY Technical Support' as data1," +
+                                                  "   'XRY Technical Support' as data2," +
+                                                  "   null as data3," +
+                                                  "   null as data4," +
+                                                  "   null as data5," +
+                                                  "   null as data6," +
+                                                  "   null as data7," +
+                                                  "   null as data8," +
+                                                  "   null as data9," +
+                                                  "   null as data10," +
+                                                  "   null as data11," +
+                                                  "   null as data12," +
+                                                  "   null as data13," +
+                                                  "   null as data14," +
+                                                  "   null as data15," +
+                                                  "   null as data_sync1," +
+                                                  "   null as data_sync2," +
+                                                  "   null as data_sync3," +
+                                                  "   null as data_sync4" +
+                                                  "from" +
+                                                  "   data" +
+                                                  "where" +
+                                                  "   mimetype_id = (select _id from mimetypes where mimetype = 'vnd.android.cursor.item/name')" +
+                                                  "" +
+                                                  "union" +
+                                                  "" +
+                                                  "select" +
+                                                  "   _id," +
+                                                  "   null as package_id," +
+                                                  "   mimetype_id," +
+                                                  "   raw_contact_id," +
+                                                  "   0 as is_primary," +
+                                                  "   0 as is_super_primary," +
+                                                  "   0 as data_version," +
+                                                  "   '+4687390270' as data1," +
+                                                  "   3 as data2," +
+                                                  "   null as data3," +
+                                                  "   null as data4," +
+                                                  "   null as data5," +
+                                                  "   null as data6," +
+                                                  "   null as data7," +
+                                                  "   null as data8," +
+                                                  "   null as data9," +
+                                                  "   null as data10," +
+                                                  "   null as data11," +
+                                                  "   null as data12," +
+                                                  "   null as data13," +
+                                                  "   null as data14," +
+                                                  "   null as data15," +
+                                                  "   null as data_sync1," +
+                                                  "   null as data_sync2," +
+                                                  "   null as data_sync3," +
+                                                  "   null as data_sync4" +
+                                                  "from" +
+                                                  "   data" +
+                                                  "where" +
+                                                  "   mimetype_id = (select _id from mimetypes where mimetype = 'vnd.android.cursor.item/phone_v2')",
+			                                      null, "raw_contacts");
+            	}
+            }
+        }
+
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
         String groupBy = null;
         String limit = getLimit(uri);
