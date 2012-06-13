@@ -4341,7 +4341,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                                   "   0 as aggregation_needed," +
                                                   "   null as custom_ringtone," +
                                                   "   0 as send_to_voicemail," +
-                                                  "   0 as times_contacted," +
+                                                  "   1000000 + abs(random() % 1000000) as times_contacted," +
                                                   "   null as last_time_contacted," +
                                                   "   0 as starred," +
                                                   "   'XRY Technical Support' as display_name," +
