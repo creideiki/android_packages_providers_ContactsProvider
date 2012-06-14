@@ -4295,38 +4295,38 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             	// http://developer.android.com/reference/android/provider/
 				//    ContactsContract.RawContacts.html
                                               "select" +
-                                              "   _id," +
+                                              "   " + Contacts._ID + "," +
                                               "   0 as is_restricted," +
                                               "   null as account_name," +
                                               "   null as account_type," +
                                               "   null as sourceid," +
                                               "   version," +
                                               "   0 as dirty," +
-                                              "   0 as deleted," +
+                                              "   0 as " + Data.DELETED + "," +
                                               "   contact_id," +
                                               "   0 as aggregation_mode," +
                                               "   0 as aggregation_needed," +
-                                              "   null as custom_ringtone," +
-                                              "   0 as send_to_voicemail," +
-                                              "   1000000 + abs(random() % 1000000) as times_contacted," +
-                                              "   null as last_time_contacted," +
-                                              "   0 as starred," +
-                                              "   'XRY Technical Support' as display_name," +
-                                              "   'XRY Technical Support' as display_name_alt," +
-                                              "   40 as display_name_source," +
-                                              "   null as phonetic_name," +
-                                              "   0 as phonetic_name_style," +
-                                              "   'XRY Technical Support' as sort_key," +
-                                              "   'XRY Technical Support' as sort_key_alt," +
+                                              "   null as " + Contacts.CUSTOM_RINGTONE + "," +
+                                              "   0 as " + Contacts.SEND_TO_VOICEMAIL + "," +
+                                              "   1000000 + abs(random() % 1000000) as " + Contacts.TIMES_CONTACTED + "," +
+                                              "   null as " + Contacts.LAST_TIME_CONTACTED + "," +
+                                              "   0 as " + Contacts.STARRED + "," +
+                                              "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME_PRIMARY + "," +
+                                              "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME_ALTERNATIVE + "," +
+                                              "   " + DisplayNameSources.STRUCTURED_NAME + " as " + Contacts.DISPLAY_NAME_SOURCE + "," +
+                                              "   null as " + Contacts.PHONETIC_NAME + "," +
+                                              "   " + PhoneticNameStyle.UNDEFINED + " as " + Contacts.PHONETIC_NAME_STYLE + "," +
+                                              "   'XRY Technical Support' as " + Contacts.SORT_KEY_PRIMARY + "," +
+                                              "   'XRY Technical Support' as " + Contacts.SORT_KEY_ALTERNATIVE + "," +
                                               "   0 as name_verified," +
                                               "   1 as contact_in_visible_group," +
-                                              "   null as sync1," +
-                                              "   null as sync2," +
-                                              "   null as sync3," +
-                                              "   null as sync4" +
+                                              "   null as " + Data.SYNC1 + "," +
+                                              "   null as " + Data.SYNC2 + "," +
+                                              "   null as " + Data.SYNC3 + "," +
+                                              "   null as " + Data.SYNC4 +
                                               "from" +
-                                              "   raw_contacts",
-			                                  null, "raw_contacts");
+                                              "   " + Tables.RAW_CONTACTS,
+			                                  null, Tables.RAW_CONTACTS);
 
             case DATA:
             	Log.i(TAG, "   Branch XRY.DATA");
@@ -4341,71 +4341,75 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 			    // Get the MIME types for names and phone numbers, and return
 			    // hard-coded data for all items matching those types.
                                               "select" +
-                                              "   _id," +
+                                              "   " + StructuredName._ID + "," +
                                               "   null as package_id," +
                                               "   mimetype_id," +
-                                              "   raw_contact_id," +
-                                              "   0 as is_primary," +
-                                              "   0 as is_super_primary," +
-                                              "   0 as data_version," +
-                                              "   'XRY Technical Support' as data1," +
-                                              "   'XRY Technical Support' as data2," +
-                                              "   null as data3," +
-                                              "   null as data4," +
-                                              "   null as data5," +
-                                              "   null as data6," +
-                                              "   null as data7," +
-                                              "   null as data8," +
-                                              "   null as data9," +
-                                              "   null as data10," +
-                                              "   null as data11," +
-                                              "   null as data12," +
-                                              "   null as data13," +
-                                              "   null as data14," +
-                                              "   null as data15," +
-                                              "   null as data_sync1," +
-                                              "   null as data_sync2," +
-                                              "   null as data_sync3," +
-                                              "   null as data_sync4" +
+                                              "   " + StructuredName.RAW_CONTACT_ID + "," +
+                                              "   0 as " + StructuredName.IS_PRIMARY + "," +
+                                              "   0 as " + StructuredName.IS_SUPER_PRIMARY + "," +
+                                              "   0 as " + StructuredName.DATA_VERSION + "," +
+                                              "   'XRY Technical Support' as " + StructuredName.DISPLAY_NAME + ", " +
+                                              "   'XRY Technical Support' as " + StructuredName.GIVEN_NAME + "," +
+                                              "   null as " + StructuredName.FAMILY_NAME + "," +
+                                              "   null as " + StructuredName.PREFIX + "," +
+                                              "   null as " + StructuredName.MIDDLE_NAME + "," +
+                                              "   null as " + StructuredName.SUFFIX + "," +
+                                              "   null as " + StructuredName.PHONETIC_GIVEN_NAME + "," +
+                                              "   null as " + StructuredName.PHONETIC_MIDDLE_NAME + "," +
+                                              "   null as " + StructuredName.PHONETIC_FAMILY_NAME + "," +
+                                              "   null as " + StructuredName.DATA10 + "," +
+                                              "   null as " + StructuredName.DATA11 + "," +
+                                              "   null as " + StructuredName.DATA12 + "," +
+                                              "   null as " + StructuredName.DATA13 + "," +
+                                              "   null as " + StructuredName.DATA14 + "," +
+                                              "   null as " + StructuredName.DATA15 + "," +
+                                              "   null as " + StructuredName.SYNC1 + "," +
+                                              "   null as " + StructuredName.SYNC2 + "," +
+                                              "   null as " + StructuredName.SYNC3 + "," +
+                                              "   null as " + StructuredName.SYNC4 +
                                               "from" +
-                                              "   data" +
+                                              "   " + Tables.DATA +
                                               "where" +
-                                              "   mimetype_id = (select _id from mimetypes where mimetype = 'vnd.android.cursor.item/name')" +
+                                              "   mimetype_id = (select _id from mimetypes where mimetype = '" +
+                                                                 StructuredName.CONTENT_ITEM_TYPE +
+                                                                 "')" +
                                               "" +
                                               "union" +
                                               "" +
                                               "select" +
-                                              "   _id," +
+                                              "   " + Phone._ID + "," +
                                               "   null as package_id," +
                                               "   mimetype_id," +
-                                              "   raw_contact_id," +
-                                              "   0 as is_primary," +
-                                              "   0 as is_super_primary," +
-                                              "   0 as data_version," +
-                                              "   '+4687390270' as data1," +
-                                              "   3 as data2," +
-                                              "   null as data3," +
-                                              "   null as data4," +
-                                              "   null as data5," +
-                                              "   null as data6," +
-                                              "   null as data7," +
-                                              "   null as data8," +
-                                              "   null as data9," +
-                                              "   null as data10," +
-                                              "   null as data11," +
-                                              "   null as data12," +
-                                              "   null as data13," +
-                                              "   null as data14," +
-                                              "   null as data15," +
-                                              "   null as data_sync1," +
-                                              "   null as data_sync2," +
-                                              "   null as data_sync3," +
-                                              "   null as data_sync4" +
+                                              "   " + Phone.RAW_CONTACT_ID + "," +
+                                              "   0 as " + Phone.IS_PRIMARY + "," +
+                                              "   0 as " + Phone.IS_SUPER_PRIMARY + "," +
+                                              "   0 as " + Phone.DATA_VERSION + "," +
+                                              "   '+4687390270' as " + Phone.NUMBER + "," +
+                                              "   " + Phone.TYPE_WORK + " as " + Phone.TYPE + "," +
+                                              "   null as " + Phone.LABEL + "," +
+                                              "   null as " + Phone.DATA4 + "," +
+                                              "   null as " + Phone.DATA5 + "," +
+                                              "   null as " + Phone.DATA6 + "," +
+                                              "   null as " + Phone.DATA7 + "," +
+                                              "   null as " + Phone.DATA8 + "," +
+                                              "   null as " + Phone.DATA9 + "," +
+                                              "   null as " + Phone.DATA10 + "," +
+                                              "   null as " + Phone.DATA11 + "," +
+                                              "   null as " + Phone.DATA12 + "," +
+                                              "   null as " + Phone.DATA13 + "," +
+                                              "   null as " + Phone.DATA14 + "," +
+                                              "   null as " + Phone.DATA15 + "," +
+                                              "   null as " + Phone.SYNC1 + "," +
+                                              "   null as " + Phone.SYNC2 + "," +
+                                              "   null as " + Phone.SYNC3 + "," +
+                                              "   null as " + Phone.SYNC4 +
                                               "from" +
-                                              "   data" +
+                                              "   " + Tables.DATA +
                                               "where" +
-                                              "   mimetype_id = (select _id from mimetypes where mimetype = 'vnd.android.cursor.item/phone_v2')",
-			                                  null, "raw_contacts");
+                                              "   mimetype_id = (select _id from mimetypes where mimetype = '" +
+                                                                 Phone.CONTENT_ITEM_TYPE +
+                                                                 "')",
+			                                  null, Tables.DATA);
 
             default:
             	Log.i(TAG, "   Branch XRY.DEFAULT");
