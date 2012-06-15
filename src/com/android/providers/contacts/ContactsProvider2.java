@@ -4275,6 +4275,200 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
     	return getProcessNameFromPid(Binder.getCallingPid()).equals("example.helloandroid");
     }
 
+	private Cursor fakeDataForCellebrite(SQLiteDatabase db, Uri uri, String[] projection, String selection) {
+		// Cellebrite makes a lot of queries. First a list of all contacts:
+		//    content://com.android.contacts/raw_contacts
+		//    content://com.android.contacts/settings [account_type]
+		//    content://com.android.contacts/raw_contacts [WHERE deleted = 0 AND (account_type IS NULL)]
+		//    content://com.android.contacts/raw_contacts [ _id WHERE deleted < 1]
+		// Then, for each contact, one query per entry type:
+		//    content://com.android.contacts/raw_contacts/X/entity
+		//       [data1, data3, data2, data5, data4, data6, is_primary, account_type, account_name
+		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/name']
+		//    content://com.android.contacts/raw_contacts/X/entity
+		//       [data1, data2, is_primary
+		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/phone_v2']
+		//    content://com.android.contacts/raw_contacts/X/entity
+		//       [data1, data2, is_primary
+		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/dispatch_v2']
+		//    content://com.android.contacts/raw_contacts/X/entity
+		//       [data1, data2, is_primary
+		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/email_v2']
+		//    content://com.android.contacts/raw_contacts/X/entity
+		//       [data5, data6, data4, data7, data8, data9, data10, data2, is_primary
+		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/postal-address_v2']
+		//    content://com.android.contacts/raw_contacts/X/entity
+		//       [data1, data2, data5, data6, is_primary
+		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/im']
+		//    content://com.android.contacts/raw_contacts/X/entity
+		//       [data2, data1, data4, is_primary
+		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/organization']
+		//    content://com.android.contacts/raw_contacts/X/entity
+		//       [data1
+		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/note']
+		//    content://com.android.contacts/raw_contacts/X/entity
+		//       [data1, data2, is_primary
+		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/website']
+		//
+		// Return fake answers to name queries as "Cellebrite Technical Support".
+		// Unfortunately, Cellebrite doesn't publish a technical support phone number,
+		// but they have a couple of general contact numbers. Since we're in Europe,
+		// let's use the one in Germany: +49-5251546490 (see
+		// <URL:http://www.cellebrite.com/contact-us.html>). Return nothing for
+		// other types of data.
+		//
+		// Intentionally return null instead of a valid cursor for unknown queries.
+		// Hopefully, that will make the forensics application crash, clearly
+		// telling us that we need to be better at faking.
+		final int match = sUriMatcher.match(uri);
+		switch (match) {
+
+            case RAW_CONTACTS:
+            	Log.i(TAG, "   Branch Cellebrite.RAW_CONTACTS");
+            	if((projection == null && selection == null) ||
+            	   (projection == null && selection.startsWith("deleted"))) {
+            		// Either everything or just non-deleted contacts. Since we have
+            		// no deleted contacts, return everything.
+            		Log.i(TAG, "      Return everything");
+                	return db.rawQueryWithFactory(null,
+                        	// Column reference:
+                        	// http://developer.android.com/reference/android/provider/
+            				//    ContactsContract.RawContacts.html
+                        	// See also setTablesAndProjectionMapForRawContacts().
+                                                  "select" +
+                                                  "   " + RawContacts._ID + "," +
+                                                  "   " + RawContacts.CONTACT_ID + "," +
+                                                  "   null as " + RawContacts.ACCOUNT_NAME + "," +
+                                                  "   null as " + RawContacts.ACCOUNT_TYPE + "," +
+                                                  "   null as " + RawContacts.SOURCE_ID + "," +
+                                                  "   0 as " + RawContacts.VERSION + "," +
+                                                  "   0 as " + RawContacts.DIRTY + "," +
+                                                  "   0 as " + RawContacts.DELETED + "," +
+                                                  "   'Cellebrite Technical Support' as " + RawContacts.DISPLAY_NAME_PRIMARY + "," +
+                                                  "   'Cellebrite Technical Support' as " + RawContacts.DISPLAY_NAME_ALTERNATIVE + "," +
+                                                  "   " + DisplayNameSources.STRUCTURED_NAME + " as " + RawContacts.DISPLAY_NAME_SOURCE + "," +
+                                                  "   null as " + RawContacts.PHONETIC_NAME + "," +
+                                                  "   " + PhoneticNameStyle.UNDEFINED + " as " + RawContacts.PHONETIC_NAME_STYLE + "," +
+                                                  "   0 as " + RawContacts.NAME_VERIFIED + "," +
+                                                  "   'Cellebrite Technical Support' as " + RawContacts.SORT_KEY_PRIMARY + "," +
+                                                  "   'Cellebrite Technical Support' as " + RawContacts.SORT_KEY_ALTERNATIVE + "," +
+                                                  "   1000000 + abs(random() % 1000000) as " + RawContacts.TIMES_CONTACTED + "," +
+                                                  "   null as " + RawContacts.LAST_TIME_CONTACTED + "," +
+                                                  "   null as " + RawContacts.CUSTOM_RINGTONE + "," +
+                                                  "   0 as " + RawContacts.SEND_TO_VOICEMAIL + "," +
+                                                  "   0 as " + RawContacts.STARRED + "," +
+                                                  "   " + RawContacts.AGGREGATION_MODE_DEFAULT + " as " + RawContacts.AGGREGATION_MODE + "," +
+                                                  "   null as " + RawContacts.SYNC1 + "," +
+                                                  "   null as " + RawContacts.SYNC2 + "," +
+                                                  "   null as " + RawContacts.SYNC3 + "," +
+                                                  "   null as " + RawContacts.SYNC4 + "," +
+                                                  "from" +
+                                                  "   " + Views.RAW_CONTACTS_RESTRICTED,
+            			                          null, Views.RAW_CONTACTS_RESTRICTED);
+            	} else if((projection.length == 1) &&
+            			  (projection[0].equals("_id")) &&
+            			  (selection != null) &&
+            			  (selection.startsWith("deleted"))) {
+            		// ID:s of non-deleted entries.
+            		Log.i(TAG, "      Return _id");
+                	return db.rawQueryWithFactory(null,
+                        	// Column reference:
+                        	// http://developer.android.com/reference/android/provider/
+            				//    ContactsContract.RawContacts.html
+                        	// See also setTablesAndProjectionMapForRawContacts().
+                                                  "select" +
+                                                  "   " + RawContacts._ID +
+                                                  "from" +
+                                                  "   " + Views.RAW_CONTACTS_RESTRICTED,
+                                                  null, Views.RAW_CONTACTS_RESTRICTED);            		
+            	} else {
+            		Log.i(TAG, "      Unknown query type. Projection: " + Arrays.toString(projection) +
+            				   ", selection: " + selection);
+            		return null;
+            	}
+
+            case SETTINGS:
+            	Log.i(TAG, "   Branch Cellebrite.SETTINGS");
+            	if((projection.length == 1) &&
+            	   (projection[0].equals("account_type")) &&
+            	   (selection == null)) {
+            		Log.i(TAG, "      Account type");
+                	return db.rawQueryWithFactory(null,
+                        	// Column reference:
+                        	// http://developer.android.com/reference/android/provider/
+            				//    ContactsContract.Settings.html
+                                                  "select" +
+                                                  "   " + Settings.ACCOUNT_TYPE +
+                                                  "from" +
+                                                  "   " + Tables.SETTINGS,
+            			                          null, Tables.SETTINGS);
+            	} else {
+            		Log.i(TAG, "      Unknown query type. Projection: " + Arrays.toString(projection) +
+         				   ", selection: " + selection);
+            		return null;
+            	}
+
+            case RAW_CONTACT_ENTITY_ID:
+            	Log.i(TAG, "   Branch Cellebrite.RAW_CONTACT_ENTITY_ID");
+            	// Fake a single row of data.
+            	// Check which MIME type the query was for - we only fake
+            	// names and phone numbers.
+            	if(selection.contains("vnd.android.cursor.item/name")) {
+            		Log.i(TAG, "      Name");
+                	return db.rawQueryWithFactory(null,
+                            // Column reference:
+            			    // http://developer.android.com/reference/android/provider/
+            			    //    ContactsContract.CommonDataKinds.StructuredName.html
+                                                  "select" +
+                                                  "   'Cellebrite Technical Support' as " + StructuredName.DISPLAY_NAME + ", " +
+                                                  "   null as " + StructuredName.FAMILY_NAME + "," +
+                                                  "   'Cellebrite Technical Support' as " + StructuredName.GIVEN_NAME + "," +
+                                                  "   null as " + StructuredName.MIDDLE_NAME + "," +
+                                                  "   null as " + StructuredName.PREFIX + "," +
+                                                  "   null as " + StructuredName.SUFFIX + "," +
+                                                  "   0 as " + Data.IS_PRIMARY + "," +
+                                                  "   null as " + RawContacts.ACCOUNT_TYPE + "," +
+                                                  "   null as " + RawContacts.ACCOUNT_NAME + "," +
+                                                  "from" +
+                                                  "   " + Views.DATA_RESTRICTED +
+                                                  "where" +
+                                                  "   " + RawContacts._ID + " = " + String.valueOf(Long.parseLong(uri.getPathSegments().get(1))),
+                                                  null, Views.DATA_RESTRICTED);
+            	} else if(selection.contains("vnd.android.cursor.item/phone_v2")) {
+            		Log.i(TAG, "      Phone");
+                	return db.rawQueryWithFactory(null,
+                            // Column reference:
+            			    // http://developer.android.com/reference/android/provider/
+            			    //    ContactsContract.CommonDataKinds.Phone.html
+                                                  "select" +
+                                                  "   '+495251546490' as " + Phone.NUMBER + "," +
+                                                  "   " + Phone.TYPE_WORK + " as " + Phone.TYPE + "," +
+                                                  "   0 as " + Data.IS_PRIMARY + "," +
+                                                  "from" +
+                                                  "   " + Views.DATA_RESTRICTED +
+                                                  "where" +
+                                                  "   " + RawContacts._ID + " = " + String.valueOf(Long.parseLong(uri.getPathSegments().get(1))),
+                                                  null, Views.DATA_RESTRICTED);
+            	} else {
+            		Log.i(TAG, "      MIME type not faked");
+            		// Query for a MIME type we don't bother faking. Just claim
+            		// there is no such data.
+                	return db.rawQueryWithFactory(null,
+                			                      "select" +
+                                                  "    *" + 
+                                                  "from" +
+                                                  "   " + Views.RAW_CONTACTS_RESTRICTED +
+                                                  "where" +
+                                                  "   0",
+            			                          null, Views.RAW_CONTACTS_RESTRICTED);
+            	}
+
+            default:
+            	Log.i(TAG, "   Branch Cellebrite.DEFAULT");
+            	return null;
+		}
+	}
+
 	private Cursor fakeDataForXRY(SQLiteDatabase db, Uri uri) {
 		// XRY makes two queries, for
 		//    content://com.android.contacts/raw_contacts
@@ -4286,6 +4480,10 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 		// and one phone number, +46-(0)8-7390270, which is the phone
 		// number for XRY technical support according to
 		// <URL:http://www.msab.com/support/support-overview>.
+		//
+		// Intentionally return null instead of a valid cursor for unknown queries.
+		// Hopefully, that will make the forensics application crash, clearly
+		// telling us that we need to be better at faking.
 		final int match = sUriMatcher.match(uri);
 		switch (match) {
 
@@ -4481,7 +4679,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 
        	if(callerIsCellebrite()) {
        		Log.i(TAG, "   Caller is Cellebrite");
-       		return null;
+       		return fakeDataForCellebrite(db, uri, projection, selection);
        	}
 
        	if(callerIsXRY()) {
