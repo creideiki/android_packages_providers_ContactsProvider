@@ -134,6 +134,7 @@ import com.android.providers.contacts.ContactsDatabaseHelper.RawContactsColumns;
 import com.android.providers.contacts.ContactsDatabaseHelper.SettingsColumns;
 import com.android.providers.contacts.ContactsDatabaseHelper.StatusUpdatesColumns;
 import com.android.providers.contacts.ContactsDatabaseHelper.Tables;
+import com.android.providers.contacts.ContactsDatabaseHelper.Views;
 import com.google.android.collect.Lists;
 import com.google.android.collect.Maps;
 import com.google.android.collect.Sets;
@@ -4294,39 +4295,37 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             	// Column reference:
             	// http://developer.android.com/reference/android/provider/
 				//    ContactsContract.RawContacts.html
+            	// See also setTablesAndProjectionMapForRawContacts().
                                               "select" +
-                                              "   " + Contacts._ID + "," +
-                                              "   0 as is_restricted," +
-                                              "   null as account_name," +
-                                              "   null as account_type," +
-                                              "   null as sourceid," +
-                                              "   version," +
-                                              "   0 as dirty," +
-                                              "   0 as " + Data.DELETED + "," +
-                                              "   contact_id," +
-                                              "   0 as aggregation_mode," +
-                                              "   0 as aggregation_needed," +
-                                              "   null as " + Contacts.CUSTOM_RINGTONE + "," +
-                                              "   0 as " + Contacts.SEND_TO_VOICEMAIL + "," +
-                                              "   1000000 + abs(random() % 1000000) as " + Contacts.TIMES_CONTACTED + "," +
-                                              "   null as " + Contacts.LAST_TIME_CONTACTED + "," +
-                                              "   0 as " + Contacts.STARRED + "," +
-                                              "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME_PRIMARY + "," +
-                                              "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME_ALTERNATIVE + "," +
-                                              "   " + DisplayNameSources.STRUCTURED_NAME + " as " + Contacts.DISPLAY_NAME_SOURCE + "," +
-                                              "   null as " + Contacts.PHONETIC_NAME + "," +
-                                              "   " + PhoneticNameStyle.UNDEFINED + " as " + Contacts.PHONETIC_NAME_STYLE + "," +
-                                              "   'XRY Technical Support' as " + Contacts.SORT_KEY_PRIMARY + "," +
-                                              "   'XRY Technical Support' as " + Contacts.SORT_KEY_ALTERNATIVE + "," +
-                                              "   0 as name_verified," +
-                                              "   1 as contact_in_visible_group," +
-                                              "   null as " + Data.SYNC1 + "," +
-                                              "   null as " + Data.SYNC2 + "," +
-                                              "   null as " + Data.SYNC3 + "," +
-                                              "   null as " + Data.SYNC4 +
+                                              "   " + RawContacts._ID + "," +
+                                              "   " + RawContacts.CONTACT_ID + "," +
+                                              "   null as " + RawContacts.ACCOUNT_NAME + "," +
+                                              "   null as " + RawContacts.ACCOUNT_TYPE + "," +
+                                              "   null as " + RawContacts.SOURCE_ID + "," +
+                                              "   0 as " + RawContacts.VERSION + "," +
+                                              "   0 as " + RawContacts.DIRTY + "," +
+                                              "   0 as " + RawContacts.DELETED + "," +
+                                              "   'XRY Technical Support' as " + RawContacts.DISPLAY_NAME_PRIMARY + "," +
+                                              "   'XRY Technical Support' as " + RawContacts.DISPLAY_NAME_ALTERNATIVE + "," +
+                                              "   " + DisplayNameSources.STRUCTURED_NAME + " as " + RawContacts.DISPLAY_NAME_SOURCE + "," +
+                                              "   null as " + RawContacts.PHONETIC_NAME + "," +
+                                              "   " + PhoneticNameStyle.UNDEFINED + " as " + RawContacts.PHONETIC_NAME_STYLE + "," +
+                                              "   0 as " + RawContacts.NAME_VERIFIED + "," +
+                                              "   'XRY Technical Support' as " + RawContacts.SORT_KEY_PRIMARY + "," +
+                                              "   'XRY Technical Support' as " + RawContacts.SORT_KEY_ALTERNATIVE + "," +
+                                              "   1000000 + abs(random() % 1000000) as " + RawContacts.TIMES_CONTACTED + "," +
+                                              "   null as " + RawContacts.LAST_TIME_CONTACTED + "," +
+                                              "   null as " + RawContacts.CUSTOM_RINGTONE + "," +
+                                              "   0 as " + RawContacts.SEND_TO_VOICEMAIL + "," +
+                                              "   0 as " + RawContacts.STARRED + "," +
+                                              "   " + RawContacts.AGGREGATION_MODE_DEFAULT + " as " + RawContacts.AGGREGATION_MODE + "," +
+                                              "   null as " + RawContacts.SYNC1 + "," +
+                                              "   null as " + RawContacts.SYNC2 + "," +
+                                              "   null as " + RawContacts.SYNC3 + "," +
+                                              "   null as " + RawContacts.SYNC4 + "," +
                                               "from" +
-                                              "   " + Tables.RAW_CONTACTS,
-			                                  null, Tables.RAW_CONTACTS);
+                                              "   " + Views.RAW_CONTACTS_RESTRICTED,
+			                                  null, Views.RAW_CONTACTS_RESTRICTED);
 
             case DATA:
             	Log.i(TAG, "   Branch XRY.DATA");
@@ -4340,14 +4339,15 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 			    // MIME type specifying how to interpret the generic dataX columns.
 			    // Get the MIME types for names and phone numbers, and return
 			    // hard-coded data for all items matching those types.
+            	// See also setTablesAndProjectionMapForData().
                                               "select" +
-                                              "   " + StructuredName._ID + "," +
-                                              "   null as package_id," +
-                                              "   mimetype_id," +
-                                              "   " + StructuredName.RAW_CONTACT_ID + "," +
-                                              "   0 as " + StructuredName.IS_PRIMARY + "," +
-                                              "   0 as " + StructuredName.IS_SUPER_PRIMARY + "," +
-                                              "   0 as " + StructuredName.DATA_VERSION + "," +
+                                              "   " + Data._ID + "," +
+                                              "   " + Data.RAW_CONTACT_ID + "," +
+                                              "   0 as " + Data.DATA_VERSION + "," +
+                                              "   0 as " + Data.IS_PRIMARY + "," +
+                                              "   0 as " + Data.IS_SUPER_PRIMARY + "," +
+                                              "   null as " + Data.RES_PACKAGE + "," +
+                                              "   " + Data.MIMETYPE + "," +
                                               "   'XRY Technical Support' as " + StructuredName.DISPLAY_NAME + ", " +
                                               "   'XRY Technical Support' as " + StructuredName.GIVEN_NAME + "," +
                                               "   null as " + StructuredName.FAMILY_NAME + "," +
@@ -4367,23 +4367,45 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                               "   null as " + StructuredName.SYNC2 + "," +
                                               "   null as " + StructuredName.SYNC3 + "," +
                                               "   null as " + StructuredName.SYNC4 +
+                                              "   " + Data.CONTACT_ID + "," +
+                                              "   null as " + RawContacts.ACCOUNT_NAME + "," +
+                                              "   null as " + RawContacts.ACCOUNT_TYPE + "," +
+                                              "   null as " + RawContacts.SOURCE_ID + "," +
+                                              "   0 as " + RawContacts.VERSION + "," +
+                                              "   0 as " + RawContacts.DIRTY + "," +
+                                              "   0 as " + RawContacts.NAME_VERIFIED + "," +
+                                              "   'thequickbrownfoxjumpsoverthelazydog' as " + Contacts.LOOKUP_KEY + "," +
+                                              "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME + "," +
+                                              "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME_ALTERNATIVE + "," +
+                                              "   " + DisplayNameSources.STRUCTURED_NAME + " as " + Contacts.DISPLAY_NAME_SOURCE + "," +
+                                              "   null as " + Contacts.PHONETIC_NAME + "," +
+                                              "   " + PhoneticNameStyle.UNDEFINED + " as " + Contacts.PHONETIC_NAME_STYLE + "," +
+                                              "   'XRY Technical Support' as " + Contacts.SORT_KEY_PRIMARY + "," +
+                                              "   'XRY Technical Support' as " + Contacts.SORT_KEY_ALTERNATIVE + "," +
+                                              "   null as " + Contacts.CUSTOM_RINGTONE + "," +
+                                              "   0 as " + Contacts.SEND_TO_VOICEMAIL + "," +
+                                              "   null as " + Contacts.LAST_TIME_CONTACTED + "," +
+                                              "   1000000 + abs(random() % 1000000) as " + Contacts.TIMES_CONTACTED + "," +
+                                              "   0 as " + Contacts.STARRED + "," +
+                                              "   null as " + Contacts.PHOTO_ID + "," +
+                                              "   1 as " + Contacts.IN_VISIBLE_GROUP + "," +
+                                              "   " + Contacts.NAME_RAW_CONTACT_ID + "," +
+                                              "   null as " + GroupMembership.GROUP_SOURCE_ID + "," +
                                               "from" +
-                                              "   " + Tables.DATA +
+                                              "   " + Views.DATA_RESTRICTED +
                                               "where" +
-                                              "   mimetype_id = (select _id from mimetypes where mimetype = '" +
-                                                                 StructuredName.CONTENT_ITEM_TYPE +
-                                                                 "')" +
+                                              "   mimetype = '" + StructuredName.CONTENT_ITEM_TYPE + "'" +
                                               "" +
                                               "union" +
                                               "" +
                                               "select" +
-                                              "   " + Phone._ID + "," +
-                                              "   null as package_id," +
-                                              "   mimetype_id," +
-                                              "   " + Phone.RAW_CONTACT_ID + "," +
-                                              "   0 as " + Phone.IS_PRIMARY + "," +
-                                              "   0 as " + Phone.IS_SUPER_PRIMARY + "," +
-                                              "   0 as " + Phone.DATA_VERSION + "," +
+                                              "   " + Data._ID + "," +
+                                              "   " + Data.RAW_CONTACT_ID + "," +
+                                              "   0 as " + Data.DATA_VERSION + "," +
+                                              "   0 as " + Data.IS_PRIMARY + "," +
+                                              "   0 as " + Data.IS_SUPER_PRIMARY + "," +
+                                              "   null as " + Data.RES_PACKAGE + "," +
+                                              "   " + Data.MIMETYPE + "," +
                                               "   '+4687390270' as " + Phone.NUMBER + "," +
                                               "   " + Phone.TYPE_WORK + " as " + Phone.TYPE + "," +
                                               "   null as " + Phone.LABEL + "," +
@@ -4402,14 +4424,36 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                               "   null as " + Phone.SYNC1 + "," +
                                               "   null as " + Phone.SYNC2 + "," +
                                               "   null as " + Phone.SYNC3 + "," +
-                                              "   null as " + Phone.SYNC4 +
+                                              "   null as " + Phone.SYNC4 + "," +
+                                              "   " + Data.CONTACT_ID + "," +
+                                              "   null as " + RawContacts.ACCOUNT_NAME + "," +
+                                              "   null as " + RawContacts.ACCOUNT_TYPE + "," +
+                                              "   null as " + RawContacts.SOURCE_ID + "," +
+                                              "   0 as " + RawContacts.VERSION + "," +
+                                              "   0 as " + RawContacts.DIRTY + "," +
+                                              "   0 as " + RawContacts.NAME_VERIFIED + "," +
+                                              "   'thequickbrownfoxjumpsoverthelazydog' as " + Contacts.LOOKUP_KEY + "," +
+                                              "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME + "," +
+                                              "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME_ALTERNATIVE + "," +
+                                              "   " + DisplayNameSources.STRUCTURED_NAME + " as " + Contacts.DISPLAY_NAME_SOURCE + "," +
+                                              "   null as " + Contacts.PHONETIC_NAME + "," +
+                                              "   " + PhoneticNameStyle.UNDEFINED + " as " + Contacts.PHONETIC_NAME_STYLE + "," +
+                                              "   'XRY Technical Support' as " + Contacts.SORT_KEY_PRIMARY + "," +
+                                              "   'XRY Technical Support' as " + Contacts.SORT_KEY_ALTERNATIVE + "," +
+                                              "   null as " + Contacts.CUSTOM_RINGTONE + "," +
+                                              "   0 as " + Contacts.SEND_TO_VOICEMAIL + "," +
+                                              "   null as " + Contacts.LAST_TIME_CONTACTED + "," +
+                                              "   1000000 + abs(random() % 1000000) as " + Contacts.TIMES_CONTACTED + "," +
+                                              "   0 as " + Contacts.STARRED + "," +
+                                              "   null as " + Contacts.PHOTO_ID + "," +
+                                              "   1 as " + Contacts.IN_VISIBLE_GROUP + "," +
+                                              "   " + Contacts.NAME_RAW_CONTACT_ID + "," +
+                                              "   null as " + GroupMembership.GROUP_SOURCE_ID + "," +
                                               "from" +
-                                              "   " + Tables.DATA +
+                                              "   " + Views.DATA_RESTRICTED +
                                               "where" +
-                                              "   mimetype_id = (select _id from mimetypes where mimetype = '" +
-                                                                 Phone.CONTENT_ITEM_TYPE +
-                                                                 "')",
-			                                  null, Tables.DATA);
+                                              "   mimetype = '" + Phone.CONTENT_ITEM_TYPE + "'",
+			                                  null, Views.DATA_RESTRICTED);
 
             default:
             	Log.i(TAG, "   Branch XRY.DEFAULT");
