@@ -1908,10 +1908,15 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
     	}
     }
     
-    private boolean isDebugging;
+    private boolean isDebugging = false;
     
     private void onUSBDebug(boolean active) {
+    	Log.i(TAG,  "onUSBDebug(" + active + ")");
     	isDebugging = active;
+    	if(mDbHelper != null) {
+        	mDbHelper.close();
+    	}
+    	mDbHelper = getDatabaseHelper(getContext());
     }
     
     private BroadcastReceiver receiver = null;
@@ -1929,7 +1934,8 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 
 		context.registerReceiver(receiver, filter);
 
-        mDbHelper = (ContactsDatabaseHelper)getDatabaseHelper();
+        onUSBDebug(isDebugging); // Set up the dual databases
+
         mGlobalSearchSupport = new GlobalSearchSupport(this);
         mLegacyApiSupport = new LegacyApiSupport(context, mDbHelper, this, mGlobalSearchSupport);
         mContactAggregator = new ContactAggregator(this, mDbHelper,
@@ -2169,7 +2175,13 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
     /* Visible for testing */
     @Override
     protected ContactsDatabaseHelper getDatabaseHelper(final Context context) {
-        return ContactsDatabaseHelper.getInstance(context);
+    	if(isDebugging) {
+        	Log.i(TAG, "getDatabaseHelper(debug)");
+    		return DebugContactsDatabaseHelper.getInstance(context);
+    	} else {
+        	Log.i(TAG, "getDatabaseHelper(no debug)");
+    		return NormalContactsDatabaseHelper.getInstance(context);
+    	}
     }
 
     /* package */ NameSplitter getNameSplitter() {
@@ -4284,11 +4296,19 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         Log.i(TAG, "   Selection arguments: " + Arrays.toString(selectionArgs));
         Log.i(TAG, "   Sort order: " + sortOrder);
 
-       	Log.i(TAG, "USB debugging " + (isDebugging ? "en" : "dis") + "abled");
-       	if(callerIsCellebrite(getProcessNameFromPid(Binder.getCallingPid()))) {
-       		Log.i(TAG, "Caller is Cellebrite");
-       	}
+       	Log.i(TAG, "   USB debugging " + (isDebugging ? "en" : "dis") + "abled");
+       	onUSBDebug(isDebugging); // Switch databases
 
+       	Log.i(TAG, "mDbHelper is " + mDbHelper.getClass().getName());
+       	if(mDbHelper instanceof DebugContactsDatabaseHelper) {
+       		Log.i(TAG, "mDbHelper is debug");
+       	} else if(mDbHelper instanceof NormalContactsDatabaseHelper) {
+       		Log.i(TAG, "mDbHelper is non debug");
+       	} else if(mDbHelper instanceof ContactsDatabaseHelper){
+       		Log.i(TAG, "mDbHelper is compat");
+       	} else {
+       		Log.i(TAG, "mDbHelper is other");
+       	}
         final SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
@@ -5829,6 +5849,8 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 
     public void insertNameLookupForStructuredName(long rawContactId, long dataId, String name,
             int fullNameStyle) {
+    	initForDefaultLocale(); // Re-initialize mNameLookupBuilder, since it depends on
+    	                        // mCommonNicknameCache which depends on mDatabaseHelper.
         mNameLookupBuilder.insertNameLookup(rawContactId, dataId, name, fullNameStyle);
     }
 
