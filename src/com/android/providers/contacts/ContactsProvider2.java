@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
 
 import android.accounts.Account;
@@ -1909,10 +1911,27 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
     	}
     }
     
-    private boolean isDebugging;
-    
+    private boolean isDebugging; // True while the cable is attached and USB debugging switched on
+    private boolean isFaking;    // True while isDebugging and afterwards until the timer expires
+    Timer fakeAfterDebug = null; // Timer for faking after debugging has stopped
+
     private void onUSBDebug(boolean active) {
-    	isDebugging = active;
+		isDebugging = active;
+
+		fakeAfterDebug.purge(); // Something happened, so any timers should count from now
+    	if(isFaking && !isDebugging) {
+    		// We were debugging, which has now stopped.
+    		// Set a timer to turn faking off in the future.
+    		fakeAfterDebug.schedule(new TimerTask() {
+    			public void run() {
+    				isFaking = false;
+    			}
+    		}, 30 * 1000 /* ms */);
+    	}
+
+    	if(isDebugging) {
+    		isFaking = true;
+    	}
     }
     
     private BroadcastReceiver receiver = null;
@@ -1929,6 +1948,8 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         final Context context = getContext();
 
 		context.registerReceiver(receiver, filter);
+
+		fakeAfterDebug = new Timer(true);
 
         mDbHelper = (ContactsDatabaseHelper)getDatabaseHelper();
         mGlobalSearchSupport = new GlobalSearchSupport(this);
@@ -4674,6 +4695,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         Log.i(TAG, "   Sort order: " + sortOrder);
 
        	Log.i(TAG, "   USB debugging " + (isDebugging ? "en" : "dis") + "abled");
+       	Log.i(TAG, "   Fake data " + (isFaking ? "on" : "off"));
 
         final SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
@@ -5249,7 +5271,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 
         qb.setStrictProjectionMap(true);
 
-		if (isDebugging) {
+		if (isFaking) {
 	        // If we end up here, we're doing USB debugging and didn't match the 
 	        // specific tests for Cellebrite and XRY at the top of this function.
 			// This could be because the signatures changed in a newer version,
