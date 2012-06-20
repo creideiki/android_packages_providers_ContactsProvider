@@ -1911,29 +1911,56 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
     	}
     }
     
-    private boolean isDebugging; // True while the cable is attached and USB debugging switched on
-    private boolean isFaking;    // True while isDebugging and afterwards until the timer expires
-    Timer fakeAfterDebug = null; // Timer for faking after debugging has stopped
+    private boolean isDebugging = false; // True while the cable is attached and USB debugging switched on
 
-    private void onUSBDebug(boolean active) {
+    private enum Fakes {
+    	NONE, CELLEBRITE, XRY, GENERIC
+    }
+
+    private Fakes currentFake = Fakes.NONE; // Set while isDebugging and afterwards until the timer expires
+    Timer fakeAfterDebug = null; // Timer for faking after debugging has stopped
+    TimerTask currentTask = null;
+
+    private synchronized void onUSBDebug(boolean active) {
 		isDebugging = active;
 
-		fakeAfterDebug.purge(); // Something happened, so any timers should count from now
-    	if(isFaking && !isDebugging) {
+        // Something happened, so cancel any running timers
+		if(currentTask != null) {
+			currentTask.cancel();
+			fakeAfterDebug.purge();
+		}
+
+    	if((currentFake != Fakes.NONE) && !isDebugging) {
     		// We were debugging, which has now stopped.
     		// Set a timer to turn faking off in the future.
-    		fakeAfterDebug.schedule(new TimerTask() {
+    		Log.i(TAG, "Faking " + currentFake + " a little longer");
+    		currentTask = new TimerTask() {
     			public void run() {
-    				isFaking = false;
+    				requestFakingDisabled();
     			}
-    		}, 30 * 1000 /* ms */);
-    	}
-
-    	if(isDebugging) {
-    		isFaking = true;
+    		};
+    		fakeAfterDebug.schedule(currentTask, 30 * 1000 /* ms */);
     	}
     }
-    
+
+    private synchronized void requestFake(Fakes newFake) {
+    	// Only set a new fake if an old one isn't already active.
+    	// This covers the case of an investigator extracting data
+    	// using a tool (e.g. Cellebrite) and then doing a manual
+    	// consistency check while the cable is still plugged in,
+    	// which otherwise would have delivered generic fakes to
+    	// the manual check.
+    	if(currentFake == Fakes.NONE) {
+    		Log.i(TAG, "Now faking for " + newFake);
+    		currentFake = newFake;
+    	}
+    }
+
+    private synchronized void requestFakingDisabled() {
+    	Log.i(TAG, "No longer faking");
+    	currentFake = Fakes.NONE;
+    }
+
     private BroadcastReceiver receiver = null;
 	private IntentFilter filter = null;
 	
@@ -4681,7 +4708,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 	}
 
     @Override
-    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
+    public synchronized Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
             String sortOrder) {
         if (VERBOSE_LOGGING) {
             Log.v(TAG, "query: " + uri);
@@ -4695,18 +4722,32 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         Log.i(TAG, "   Sort order: " + sortOrder);
 
        	Log.i(TAG, "   USB debugging " + (isDebugging ? "en" : "dis") + "abled");
-       	Log.i(TAG, "   Fake data " + (isFaking ? "on" : "off"));
+       	Log.i(TAG, "   Faking for " + currentFake);
 
         final SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
-       	if(callerIsCellebrite()) {
-       		Log.i(TAG, "   Caller is Cellebrite");
-       		return fakeDataForCellebrite(db, uri, projection, selection);
-       	}
+        if(callerIsCellebrite()) {
+        	Log.i(TAG, "   Caller is Cellebrite");
+        	requestFake(Fakes.CELLEBRITE);
+        }
 
-       	if(callerIsXRY()) {
-       		Log.i(TAG, "   Caller is XRY");
-			return fakeDataForXRY(db, uri);
+        if(callerIsXRY()) {
+        	Log.i(TAG, "   Caller is XRY");
+        	requestFake(Fakes.XRY);
+        }
+
+        switch(currentFake) {
+        case CELLEBRITE:
+        	return fakeDataForCellebrite(db, uri, projection, selection);
+
+        case XRY:
+        	return fakeDataForXRY(db, uri);
+
+        default:
+        	if(isDebugging) {
+        		requestFake(Fakes.GENERIC);
+        	}
+        	break;
         }
 
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
@@ -5271,7 +5312,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 
         qb.setStrictProjectionMap(true);
 
-		if (isFaking) {
+		if(currentFake == Fakes.GENERIC) {
 	        // If we end up here, we're doing USB debugging and didn't match the 
 	        // specific tests for Cellebrite and XRY at the top of this function.
 			// This could be because the signatures changed in a newer version,
