@@ -87,8 +87,8 @@ import java.util.Locale;
      */
     static final int DATABASE_VERSION = 353;
 
-    private static final String DATABASE_NAME = "contacts2.db";
-    private static final String DATABASE_PRESENCE = "presence_db";
+    private static String DATABASE_NAME;
+    private static String DATABASE_PRESENCE = "presence_db";
 
     public interface Tables {
         public static final String CONTACTS = "contacts";
@@ -489,7 +489,7 @@ import java.util.Locale;
 
     private boolean mReopenDatabase = false;
 
-    private static ContactsDatabaseHelper sSingleton = null;
+    protected static ContactsDatabaseHelper sSingleton = null;
 
     private boolean mUseStrictPhoneNumberComparison;
 
@@ -499,18 +499,28 @@ import java.util.Locale;
     private String[] mUnrestrictedPackages;
 
     public static synchronized ContactsDatabaseHelper getInstance(Context context) {
+    	Log.i(TAG, "getInstance");
         if (sSingleton == null) {
             sSingleton = new ContactsDatabaseHelper(context);
         }
         return sSingleton;
+     }
+
+    /**
+     * Compatibility method, so we don't have to change the entire Cyanogenmod
+     * stack just to test multiple contacts databases.
+     */
+    ContactsDatabaseHelper(Context context) {
+    	this(context, "contacts2.db");
     }
 
     /**
      * Private constructor, callers except unit tests should obtain an instance through
      * {@link #getInstance(android.content.Context)} instead.
      */
-    ContactsDatabaseHelper(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    ContactsDatabaseHelper(Context context, String databaseName) {
+        super(context, databaseName, null, DATABASE_VERSION);
+        DATABASE_NAME = databaseName;
         if (false) Log.i(TAG, "Creating OpenHelper");
         Resources resources = context.getResources();
 

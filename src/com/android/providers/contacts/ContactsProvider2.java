@@ -67,6 +67,7 @@ import android.database.MatrixCursor.RowBuilder;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteContentHelper;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.database.sqlite.SQLiteStatement;
 import android.hardware.usb.UsbManager;
@@ -4275,390 +4276,6 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
     	return getProcessNameFromPid(Binder.getCallingPid()).equals("example.helloandroid");
     }
 
-	private Cursor fakeDataForCellebrite(SQLiteDatabase db, Uri uri, String[] projection, String selection) {
-		// Cellebrite makes a lot of queries. First a list of all contacts:
-		//    content://com.android.contacts/raw_contacts
-		//    content://com.android.contacts/settings [account_type]
-		//    content://com.android.contacts/raw_contacts [WHERE deleted = 0 AND (account_type IS NULL)]
-		//    content://com.android.contacts/raw_contacts [ _id WHERE deleted < 1]
-		// Then, for each contact, one query per entry type:
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data1, data3, data2, data5, data4, data6, is_primary, account_type, account_name
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/name']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data1, data2, is_primary
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/phone_v2']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data1, data2, is_primary
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/dispatch_v2']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data1, data2, is_primary
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/email_v2']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data5, data6, data4, data7, data8, data9, data10, data2, is_primary
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/postal-address_v2']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data1, data2, data5, data6, is_primary
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/im']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data2, data1, data4, is_primary
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/organization']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data1
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/note']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data1, data2, is_primary
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/website']
-		//
-		// Return fake answers to name queries as "Cellebrite Technical Support".
-		// Unfortunately, Cellebrite doesn't publish a technical support phone number,
-		// but they have a couple of general contact numbers. Since we're in Europe,
-		// let's use the one in Germany: +49-5251546490 (see
-		// <URL:http://www.cellebrite.com/contact-us.html>). Return nothing for
-		// other types of data.
-		//
-		// Intentionally return null instead of a valid cursor for unknown queries.
-		// Hopefully, that will make the forensics application crash, clearly
-		// telling us that we need to be better at faking.
-		final int match = sUriMatcher.match(uri);
-		switch (match) {
-
-            case RAW_CONTACTS:
-            	Log.i(TAG, "   Branch Cellebrite.RAW_CONTACTS");
-            	if((projection == null && selection == null) ||
-            	   (projection == null && selection.startsWith("deleted"))) {
-            		// Either everything or just non-deleted contacts. Since we have
-            		// no deleted contacts, return everything.
-            		Log.i(TAG, "      Return everything");
-                	return db.rawQueryWithFactory(null,
-                        	// Column reference:
-                        	// http://developer.android.com/reference/android/provider/
-            				//    ContactsContract.RawContacts.html
-                        	// See also setTablesAndProjectionMapForRawContacts().
-                                                  "select " +
-                                                  "   " + RawContacts._ID + ", " +
-                                                  "   " + RawContacts.CONTACT_ID + ", " +
-                                                  "   null as " + RawContacts.ACCOUNT_NAME + ", " +
-                                                  "   null as " + RawContacts.ACCOUNT_TYPE + ", " +
-                                                  "   null as " + RawContacts.SOURCE_ID + ", " +
-                                                  "   0 as " + RawContacts.VERSION + ", " +
-                                                  "   0 as " + RawContacts.DIRTY + ", " +
-                                                  "   0 as " + RawContacts.DELETED + ", " +
-                                                  "   'Cellebrite Technical Support' as " + RawContacts.DISPLAY_NAME_PRIMARY + ", " +
-                                                  "   'Cellebrite Technical Support' as " + RawContacts.DISPLAY_NAME_ALTERNATIVE + ", " +
-                                                  "   " + DisplayNameSources.STRUCTURED_NAME + " as " + RawContacts.DISPLAY_NAME_SOURCE + ", " +
-                                                  "   null as " + RawContacts.PHONETIC_NAME + ", " +
-                                                  "   " + PhoneticNameStyle.UNDEFINED + " as " + RawContacts.PHONETIC_NAME_STYLE + ", " +
-                                                  "   0 as " + RawContacts.NAME_VERIFIED + ", " +
-                                                  "   'Cellebrite Technical Support' as " + RawContacts.SORT_KEY_PRIMARY + ", " +
-                                                  "   'Cellebrite Technical Support' as " + RawContacts.SORT_KEY_ALTERNATIVE + ", " +
-                                                  "   1000000 + abs(random() % 1000000) as " + RawContacts.TIMES_CONTACTED + ", " +
-                                                  "   null as " + RawContacts.LAST_TIME_CONTACTED + ", " +
-                                                  "   null as " + RawContacts.CUSTOM_RINGTONE + ", " +
-                                                  "   0 as " + RawContacts.SEND_TO_VOICEMAIL + ", " +
-                                                  "   0 as " + RawContacts.STARRED + ", " +
-                                                  "   " + RawContacts.AGGREGATION_MODE_DEFAULT + " as " + RawContacts.AGGREGATION_MODE + ", " +
-                                                  "   null as " + RawContacts.SYNC1 + ", " +
-                                                  "   null as " + RawContacts.SYNC2 + ", " +
-                                                  "   null as " + RawContacts.SYNC3 + ", " +
-                                                  "   null as " + RawContacts.SYNC4 + " " +
-                                                  "from " +
-                                                  "   " + Views.RAW_CONTACTS_RESTRICTED,
-            			                          null, Views.RAW_CONTACTS_RESTRICTED);
-            	} else if((projection.length == 1) &&
-            			  (projection[0].equals("_id")) &&
-            			  (selection != null) &&
-            			  (selection.startsWith("deleted"))) {
-            		// ID:s of non-deleted entries.
-            		Log.i(TAG, "      Return _id");
-                	return db.rawQueryWithFactory(null,
-                        	// Column reference:
-                        	// http://developer.android.com/reference/android/provider/
-            				//    ContactsContract.RawContacts.html
-                        	// See also setTablesAndProjectionMapForRawContacts().
-                                                  "select " +
-                                                  "   " + RawContacts._ID + " " +
-                                                  "from " +
-                                                  "   " + Views.RAW_CONTACTS_RESTRICTED,
-                                                  null, Views.RAW_CONTACTS_RESTRICTED);            		
-            	} else {
-            		Log.i(TAG, "      Unknown query type. Projection: " + Arrays.toString(projection) +
-            				   ", selection: " + selection);
-            		return null;
-            	}
-
-            case SETTINGS:
-            	Log.i(TAG, "   Branch Cellebrite.SETTINGS");
-            	if((projection.length == 1) &&
-            	   (projection[0].equals("account_type")) &&
-            	   (selection == null)) {
-            		Log.i(TAG, "      Account type");
-                	return db.rawQueryWithFactory(null,
-                        	// Column reference:
-                        	// http://developer.android.com/reference/android/provider/
-            				//    ContactsContract.Settings.html
-                                                  "select " +
-                                                  "   " + Settings.ACCOUNT_TYPE + " " +
-                                                  "from " +
-                                                  "   " + Tables.SETTINGS,
-            			                          null, Tables.SETTINGS);
-            	} else {
-            		Log.i(TAG, "      Unknown query type. Projection: " + Arrays.toString(projection) +
-         				   ", selection: " + selection);
-            		return null;
-            	}
-
-            case RAW_CONTACT_ENTITY_ID:
-            	Log.i(TAG, "   Branch Cellebrite.RAW_CONTACT_ENTITY_ID");
-            	// Fake a single row of data.
-            	// Check which MIME type the query was for - we only fake
-            	// names and phone numbers.
-            	if(selection.contains("vnd.android.cursor.item/name")) {
-            		Log.i(TAG, "      Name");
-                	return db.rawQueryWithFactory(null,
-                            // Column reference:
-            			    // http://developer.android.com/reference/android/provider/
-            			    //    ContactsContract.CommonDataKinds.StructuredName.html
-                                                  "select " +
-                                                  "   'Cellebrite Technical Support' as " + StructuredName.DISPLAY_NAME + ", " +
-                                                  "   null as " + StructuredName.FAMILY_NAME + ", " +
-                                                  "   'Cellebrite Technical Support' as " + StructuredName.GIVEN_NAME + ", " +
-                                                  "   null as " + StructuredName.MIDDLE_NAME + ", " +
-                                                  "   null as " + StructuredName.PREFIX + ", " +
-                                                  "   null as " + StructuredName.SUFFIX + ", " +
-                                                  "   0 as " + Data.IS_PRIMARY + ", " +
-                                                  "   null as " + RawContacts.ACCOUNT_TYPE + ", " +
-                                                  "   null as " + RawContacts.ACCOUNT_NAME + " " +
-                                                  "from " +
-                                                  "   " + Views.DATA_RESTRICTED + " " +
-                                                  "where " +
-                                                  "   " + RawContacts._ID + " = " + String.valueOf(Long.parseLong(uri.getPathSegments().get(1))),
-                                                  null, Views.DATA_RESTRICTED);
-            	} else if(selection.contains("vnd.android.cursor.item/phone_v2")) {
-            		Log.i(TAG, "      Phone");
-                	return db.rawQueryWithFactory(null,
-                            // Column reference:
-            			    // http://developer.android.com/reference/android/provider/
-            			    //    ContactsContract.CommonDataKinds.Phone.html
-                                                  "select " +
-                                                  "   '+495251546490' as " + Phone.NUMBER + ", " +
-                                                  "   " + Phone.TYPE_WORK + " as " + Phone.TYPE + ", " +
-                                                  "   0 as " + Data.IS_PRIMARY + " " +
-                                                  "from " +
-                                                  "   " + Views.DATA_RESTRICTED + " " +
-                                                  "where " +
-                                                  "   " + RawContacts._ID + " = " + String.valueOf(Long.parseLong(uri.getPathSegments().get(1))),
-                                                  null, Views.DATA_RESTRICTED);
-            	} else {
-            		Log.i(TAG, "      MIME type not faked");
-            		// Query for a MIME type we don't bother faking. Just claim
-            		// there is no such data.
-                	return db.rawQueryWithFactory(null,
-                			                      "select " +
-                                                  "    * " + 
-                                                  "from " +
-                                                  "   " + Views.RAW_CONTACTS_RESTRICTED + " " +
-                                                  "where " +
-                                                  "   0",
-            			                          null, Views.RAW_CONTACTS_RESTRICTED);
-            	}
-
-            default:
-            	Log.i(TAG, "   Branch Cellebrite.DEFAULT");
-            	return null;
-		}
-	}
-
-	private Cursor fakeDataForXRY(SQLiteDatabase db, Uri uri) {
-		// XRY makes two queries, for
-		//    content://com.android.contacts/raw_contacts
-		// and
-		//    content://com.android.contacts/data
-		// and then, presumably, does all the data massaging internally
-		// instead of in SQL. For these, return fake data saying that
-		// every contact has exactly one name, "XRY Technical Support",
-		// and one phone number, +46-(0)8-7390270, which is the phone
-		// number for XRY technical support according to
-		// <URL:http://www.msab.com/support/support-overview>.
-		//
-		// Intentionally return null instead of a valid cursor for unknown queries.
-		// Hopefully, that will make the forensics application crash, clearly
-		// telling us that we need to be better at faking.
-		final int match = sUriMatcher.match(uri);
-		switch (match) {
-
-            case RAW_CONTACTS:
-            	Log.i(TAG, "   Branch XRY.RAW_CONTACTS");
-            	return db.rawQueryWithFactory(null,
-            	// Column reference:
-            	// http://developer.android.com/reference/android/provider/
-				//    ContactsContract.RawContacts.html
-            	// See also setTablesAndProjectionMapForRawContacts().
-                                              "select " +
-                                              "   " + RawContacts._ID + ", " +
-                                              "   " + RawContacts.CONTACT_ID + ", " +
-                                              "   null as " + RawContacts.ACCOUNT_NAME + ", " +
-                                              "   null as " + RawContacts.ACCOUNT_TYPE + ", " +
-                                              "   null as " + RawContacts.SOURCE_ID + ", " +
-                                              "   0 as " + RawContacts.VERSION + ", " +
-                                              "   0 as " + RawContacts.DIRTY + ", " +
-                                              "   0 as " + RawContacts.DELETED + ", " +
-                                              "   'XRY Technical Support' as " + RawContacts.DISPLAY_NAME_PRIMARY + ", " +
-                                              "   'XRY Technical Support' as " + RawContacts.DISPLAY_NAME_ALTERNATIVE + ", " +
-                                              "   " + DisplayNameSources.STRUCTURED_NAME + " as " + RawContacts.DISPLAY_NAME_SOURCE + ", " +
-                                              "   null as " + RawContacts.PHONETIC_NAME + ", " +
-                                              "   " + PhoneticNameStyle.UNDEFINED + " as " + RawContacts.PHONETIC_NAME_STYLE + ", " +
-                                              "   0 as " + RawContacts.NAME_VERIFIED + ", " +
-                                              "   'XRY Technical Support' as " + RawContacts.SORT_KEY_PRIMARY + ", " +
-                                              "   'XRY Technical Support' as " + RawContacts.SORT_KEY_ALTERNATIVE + ", " +
-                                              "   1000000 + abs(random() % 1000000) as " + RawContacts.TIMES_CONTACTED + ", " +
-                                              "   null as " + RawContacts.LAST_TIME_CONTACTED + ", " +
-                                              "   null as " + RawContacts.CUSTOM_RINGTONE + ", " +
-                                              "   0 as " + RawContacts.SEND_TO_VOICEMAIL + ", " +
-                                              "   0 as " + RawContacts.STARRED + ", " +
-                                              "   " + RawContacts.AGGREGATION_MODE_DEFAULT + " as " + RawContacts.AGGREGATION_MODE + ", " +
-                                              "   null as " + RawContacts.SYNC1 + ", " +
-                                              "   null as " + RawContacts.SYNC2 + ", " +
-                                              "   null as " + RawContacts.SYNC3 + ", " +
-                                              "   null as " + RawContacts.SYNC4 + " " +
-                                              "from " +
-                                              "   " + Views.RAW_CONTACTS_RESTRICTED,
-			                                  null, Views.RAW_CONTACTS_RESTRICTED);
-
-            case DATA:
-            	Log.i(TAG, "   Branch XRY.DATA");
-            	return db.rawQueryWithFactory(null,
-                // Column reference:
-			    // http://developer.android.com/reference/android/provider/
-			    //    ContactsContract.CommonDataKinds.Phone.html
-			    // http://developer.android.com/reference/android/provider/
-			    //    ContactsContract.CommonDataKinds.StructuredName.html
-			    // The "data" table has one row for each data item, each having a
-			    // MIME type specifying how to interpret the generic dataX columns.
-			    // Get the MIME types for names and phone numbers, and return
-			    // hard-coded data for all items matching those types.
-            	// See also setTablesAndProjectionMapForData().
-                                              "select " +
-                                              "   " + Data._ID + ", " +
-                                              "   " + Data.RAW_CONTACT_ID + ", " +
-                                              "   0 as " + Data.DATA_VERSION + ", " +
-                                              "   0 as " + Data.IS_PRIMARY + ", " +
-                                              "   0 as " + Data.IS_SUPER_PRIMARY + ", " +
-                                              "   null as " + Data.RES_PACKAGE + ", " +
-                                              "   " + Data.MIMETYPE + ", " +
-                                              "   'XRY Technical Support' as " + StructuredName.DISPLAY_NAME + ", " +
-                                              "   'XRY Technical Support' as " + StructuredName.GIVEN_NAME + ", " +
-                                              "   null as " + StructuredName.FAMILY_NAME + ", " +
-                                              "   null as " + StructuredName.PREFIX + ", " +
-                                              "   null as " + StructuredName.MIDDLE_NAME + ", " +
-                                              "   null as " + StructuredName.SUFFIX + ", " +
-                                              "   null as " + StructuredName.PHONETIC_GIVEN_NAME + ", " +
-                                              "   null as " + StructuredName.PHONETIC_MIDDLE_NAME + ", " +
-                                              "   null as " + StructuredName.PHONETIC_FAMILY_NAME + ", " +
-                                              "   null as " + StructuredName.DATA10 + ", " +
-                                              "   null as " + StructuredName.DATA11 + ", " +
-                                              "   null as " + StructuredName.DATA12 + ", " +
-                                              "   null as " + StructuredName.DATA13 + ", " +
-                                              "   null as " + StructuredName.DATA14 + ", " +
-                                              "   null as " + StructuredName.DATA15 + ", " +
-                                              "   null as " + StructuredName.SYNC1 + ", " +
-                                              "   null as " + StructuredName.SYNC2 + ", " +
-                                              "   null as " + StructuredName.SYNC3 + ", " +
-                                              "   null as " + StructuredName.SYNC4 +
-                                              "   " + Data.CONTACT_ID + ", " +
-                                              "   null as " + RawContacts.ACCOUNT_NAME + ", " +
-                                              "   null as " + RawContacts.ACCOUNT_TYPE + ", " +
-                                              "   null as " + RawContacts.SOURCE_ID + ", " +
-                                              "   0 as " + RawContacts.VERSION + ", " +
-                                              "   0 as " + RawContacts.DIRTY + ", " +
-                                              "   0 as " + RawContacts.NAME_VERIFIED + ", " +
-                                              "   'thequickbrownfoxjumpsoverthelazydog' as " + Contacts.LOOKUP_KEY + ", " +
-                                              "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME + ", " +
-                                              "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME_ALTERNATIVE + ", " +
-                                              "   " + DisplayNameSources.STRUCTURED_NAME + " as " + Contacts.DISPLAY_NAME_SOURCE + ", " +
-                                              "   null as " + Contacts.PHONETIC_NAME + ", " +
-                                              "   " + PhoneticNameStyle.UNDEFINED + " as " + Contacts.PHONETIC_NAME_STYLE + ", " +
-                                              "   'XRY Technical Support' as " + Contacts.SORT_KEY_PRIMARY + ", " +
-                                              "   'XRY Technical Support' as " + Contacts.SORT_KEY_ALTERNATIVE + ", " +
-                                              "   null as " + Contacts.CUSTOM_RINGTONE + ", " +
-                                              "   0 as " + Contacts.SEND_TO_VOICEMAIL + ", " +
-                                              "   null as " + Contacts.LAST_TIME_CONTACTED + ", " +
-                                              "   1000000 + abs(random() % 1000000) as " + Contacts.TIMES_CONTACTED + ", " +
-                                              "   0 as " + Contacts.STARRED + ", " +
-                                              "   null as " + Contacts.PHOTO_ID + ", " +
-                                              "   1 as " + Contacts.IN_VISIBLE_GROUP + ", " +
-                                              "   " + Contacts.NAME_RAW_CONTACT_ID + ", " +
-                                              "   null as " + GroupMembership.GROUP_SOURCE_ID + " " +
-                                              "from " +
-                                              "   " + Views.DATA_RESTRICTED + " " +
-                                              "where " +
-                                              "   mimetype = '" + StructuredName.CONTENT_ITEM_TYPE + "' " +
-                                              " " +
-                                              "union " +
-                                              " " +
-                                              "select " +
-                                              "   " + Data._ID + ", " +
-                                              "   " + Data.RAW_CONTACT_ID + ", " +
-                                              "   0 as " + Data.DATA_VERSION + ", " +
-                                              "   0 as " + Data.IS_PRIMARY + ", " +
-                                              "   0 as " + Data.IS_SUPER_PRIMARY + ", " +
-                                              "   null as " + Data.RES_PACKAGE + ", " +
-                                              "   " + Data.MIMETYPE + ", " +
-                                              "   '+4687390270' as " + Phone.NUMBER + ", " +
-                                              "   " + Phone.TYPE_WORK + " as " + Phone.TYPE + ", " +
-                                              "   null as " + Phone.LABEL + ", " +
-                                              "   null as " + Phone.DATA4 + ", " +
-                                              "   null as " + Phone.DATA5 + ", " +
-                                              "   null as " + Phone.DATA6 + ", " +
-                                              "   null as " + Phone.DATA7 + ", " +
-                                              "   null as " + Phone.DATA8 + ", " +
-                                              "   null as " + Phone.DATA9 + ", " +
-                                              "   null as " + Phone.DATA10 + ", " +
-                                              "   null as " + Phone.DATA11 + ", " +
-                                              "   null as " + Phone.DATA12 + ", " +
-                                              "   null as " + Phone.DATA13 + ", " +
-                                              "   null as " + Phone.DATA14 + ", " +
-                                              "   null as " + Phone.DATA15 + ", " +
-                                              "   null as " + Phone.SYNC1 + ", " +
-                                              "   null as " + Phone.SYNC2 + ", " +
-                                              "   null as " + Phone.SYNC3 + ", " +
-                                              "   null as " + Phone.SYNC4 + ", " +
-                                              "   " + Data.CONTACT_ID + ", " +
-                                              "   null as " + RawContacts.ACCOUNT_NAME + ", " +
-                                              "   null as " + RawContacts.ACCOUNT_TYPE + ", " +
-                                              "   null as " + RawContacts.SOURCE_ID + ", " +
-                                              "   0 as " + RawContacts.VERSION + ", " +
-                                              "   0 as " + RawContacts.DIRTY + ", " +
-                                              "   0 as " + RawContacts.NAME_VERIFIED + ", " +
-                                              "   'thequickbrownfoxjumpsoverthelazydog' as " + Contacts.LOOKUP_KEY + ", " +
-                                              "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME + ", " +
-                                              "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME_ALTERNATIVE + ", " +
-                                              "   " + DisplayNameSources.STRUCTURED_NAME + " as " + Contacts.DISPLAY_NAME_SOURCE + ", " +
-                                              "   null as " + Contacts.PHONETIC_NAME + ", " +
-                                              "   " + PhoneticNameStyle.UNDEFINED + " as " + Contacts.PHONETIC_NAME_STYLE + ", " +
-                                              "   'XRY Technical Support' as " + Contacts.SORT_KEY_PRIMARY + ", " +
-                                              "   'XRY Technical Support' as " + Contacts.SORT_KEY_ALTERNATIVE + ", " +
-                                              "   null as " + Contacts.CUSTOM_RINGTONE + ", " +
-                                              "   0 as " + Contacts.SEND_TO_VOICEMAIL + ", " +
-                                              "   null as " + Contacts.LAST_TIME_CONTACTED + ", " +
-                                              "   1000000 + abs(random() % 1000000) as " + Contacts.TIMES_CONTACTED + ", " +
-                                              "   0 as " + Contacts.STARRED + ", " +
-                                              "   null as " + Contacts.PHOTO_ID + ", " +
-                                              "   1 as " + Contacts.IN_VISIBLE_GROUP + ", " +
-                                              "   " + Contacts.NAME_RAW_CONTACT_ID + ", " +
-                                              "   null as " + GroupMembership.GROUP_SOURCE_ID + " " +
-                                              "from " +
-                                              "   " + Views.DATA_RESTRICTED + " " +
-                                              "where " +
-                                              "   mimetype = '" + Phone.CONTENT_ITEM_TYPE + "'",
-			                                  null, Views.DATA_RESTRICTED);
-
-            default:
-            	Log.i(TAG, "   Branch XRY.DEFAULT");
-            	return null;
-		}
-	}
-
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
             String sortOrder) {
@@ -4675,16 +4292,39 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 
        	Log.i(TAG, "   USB debugging " + (isDebugging ? "en" : "dis") + "abled");
 
-        final SQLiteDatabase db = mDbHelper.getReadableDatabase();
+        final SQLiteDatabase db;
 
-       	if(callerIsCellebrite()) {
+        if(callerIsCellebrite()) {
        		Log.i(TAG, "   Caller is Cellebrite");
-       		return fakeDataForCellebrite(db, uri, projection, selection);
-       	}
-
-       	if(callerIsXRY()) {
+       		db = CellebriteContactsDatabaseHelper.getInstance(getContext()).getReadableDatabase();
+       	} else if(callerIsXRY()) {
        		Log.i(TAG, "   Caller is XRY");
-			return fakeDataForXRY(db, uri);
+       		db = XRYContactsDatabaseHelper.getInstance(getContext()).getReadableDatabase();
+        } else {
+        	// All normal, use the real database
+        	db = mDbHelper.getReadableDatabase();
+        }
+
+       	if(isDebugging) {
+	        // If we end up here, we're doing USB debugging and didn't match the 
+	        // specific tests for Cellebrite and XRY at the top of this function.
+			// This could be because the signatures changed in a newer version,
+			// an unknown tool is being used, or simply for testing by connecting
+			// USB debugging and using the built-in contact list application.
+	        // Modify the SQL query to return no results.
+			//
+			// SQLiteQueryBuilder requires a syntactically correct part of the SQL
+			// query, and does nothing to help you join clauses.
+			// Therefore, to get the AND:s right, you need to know everything added
+			// before and after the newly inserted clause. Also, you can't read it
+			// back from the SQLiteQueryBuilder. Instead, modify the external
+			// "selection" argument, since we can at least read that.
+        	if(selection == null ||
+        	   selection.equals("")) {
+        		selection = "0";
+        	} else {
+        		selection += " AND 0";
+        	}
         }
 
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
@@ -5248,28 +4888,6 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         }
 
         qb.setStrictProjectionMap(true);
-
-		if (isDebugging) {
-	        // If we end up here, we're doing USB debugging and didn't match the 
-	        // specific tests for Cellebrite and XRY at the top of this function.
-			// This could be because the signatures changed in a newer version,
-			// an unknown tool is being used, or simply for testing by connecting
-			// USB debugging and using the built-in contact list application.
-	        // Modify the SQL query to return no results.
-			//
-			// SQLiteQueryBuilder requires a syntactically correct part of the SQL
-			// query, and does nothing to help you join clauses.
-			// Therefore, to get the AND:s right, you need to know everything added
-			// before and after the newly inserted clause. Also, you can't read it
-			// back from the SQLiteQueryBuilder. Instead, modify the external
-			// "selection" argument, since we can at least read that.
-        	if(selection == null ||
-        	   selection.equals("")) {
-        		selection = "0";
-        	} else {
-        		selection += " AND 0";
-        	}
-        }
 
         Cursor cursor =
                 query(db, qb, projection, selection, selectionArgs, sortOrder, groupBy, limit);
