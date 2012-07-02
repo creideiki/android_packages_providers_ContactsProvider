@@ -4201,6 +4201,17 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 
         final SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
+		// We only want to delay automatic extraction
+        if(callerIsCellebrite() || callerIsXRY()) {
+			Log.i(TAG, "   Tarpit: sleeping 30 seconds...");
+			try {
+				Thread.sleep(30 * 1000 /* ms */);
+			} catch (InterruptedException e) {
+				Log.i(TAG, "   Sleep interrupted!");
+			}
+			Log.i(TAG, "   ... done");
+		}
+
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
         String groupBy = null;
         String limit = getLimit(uri);
