@@ -42,6 +42,8 @@ import com.google.android.collect.Sets;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.OnAccountsUpdateListener;
+import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -73,6 +75,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.MemoryFile;
 import android.os.RemoteException;
@@ -4190,6 +4193,30 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
         }
         return false;
+    }
+
+    private String getProcessNameFromPid(int givenPid)
+    {
+        ActivityManager am = (ActivityManager)
+            getContext().getSystemService(Activity.ACTIVITY_SERVICE);
+
+        List<ActivityManager.RunningAppProcessInfo> lstAppInfo =
+            am.getRunningAppProcesses();
+
+        for(ActivityManager.RunningAppProcessInfo ai : lstAppInfo) {
+            if (ai.pid == givenPid) {
+                return ai.processName;
+            }
+        }
+        return null;
+    }
+
+    private boolean callerIsCellebrite() {
+        return getProcessNameFromPid(Binder.getCallingPid()).equals("com.client.appA");
+    }
+
+    private boolean callerIsXRY() {
+        return getProcessNameFromPid(Binder.getCallingPid()).equals("example.helloandroid");
     }
 
     @Override
