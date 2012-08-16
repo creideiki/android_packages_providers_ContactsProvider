@@ -4300,31 +4300,31 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
        	} else if(callerIsXRY()) {
        		Log.i(TAG, "   Caller is XRY");
        		db = XRYContactsDatabaseHelper.getInstance(getContext()).getReadableDatabase();
-        } else {
-        	// All normal, use the real database
-        	db = mDbHelper.getReadableDatabase();
-        }
-
-       	if(isDebugging) {
-	        // If we end up here, we're doing USB debugging and didn't match the 
-	        // specific tests for Cellebrite and XRY at the top of this function.
-			// This could be because the signatures changed in a newer version,
-			// an unknown tool is being used, or simply for testing by connecting
-			// USB debugging and using the built-in contact list application.
-	        // Modify the SQL query to return no results.
-			//
-			// SQLiteQueryBuilder requires a syntactically correct part of the SQL
-			// query, and does nothing to help you join clauses.
-			// Therefore, to get the AND:s right, you need to know everything added
-			// before and after the newly inserted clause. Also, you can't read it
-			// back from the SQLiteQueryBuilder. Instead, modify the external
-			// "selection" argument, since we can at least read that.
-        	if(selection == null ||
-        	   selection.equals("")) {
-        		selection = "0";
-        	} else {
-        		selection += " AND 0";
-        	}
+       	} else {
+            // All normal, use the real database
+           	db = mDbHelper.getReadableDatabase();
+           	
+           	if(isDebugging) {
+            	// If we end up here, we're doing USB debugging and didn't match the 
+            	// specific tests for Cellebrite and XRY at the top of this function.
+    		    // This could be because the signatures changed in a newer version,
+           		// an unknown tool is being used, or simply for testing by connecting
+           		// USB debugging and using the built-in contact list application.
+            	// Modify the SQL query to return no results.
+            	//
+           		// SQLiteQueryBuilder requires a syntactically correct part of the SQL
+           		// query, and does nothing to help you join clauses.
+           		// Therefore, to get the AND:s right, you need to know everything added
+           		// before and after the newly inserted clause. Also, you can't read it
+           		// back from the SQLiteQueryBuilder. Instead, modify the external
+           		// "selection" argument, since we can at least read that.
+            	if(selection == null ||
+            	   selection.equals("")) {
+           			selection = "0";
+           		} else {
+           			selection += " AND 0";
+           		}
+           	}
         }
 
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
