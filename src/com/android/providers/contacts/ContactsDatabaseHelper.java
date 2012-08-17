@@ -499,7 +499,7 @@ import java.util.Locale;
     private String[] mUnrestrictedPackages;
 
     public static synchronized ContactsDatabaseHelper getInstance(Context context) {
-    	Log.i(TAG, "getInstance");
+        Log.i(TAG, "getInstance");
         if (sSingleton == null) {
             sSingleton = new ContactsDatabaseHelper(context);
         }
@@ -511,7 +511,7 @@ import java.util.Locale;
      * stack just to test multiple contacts databases.
      */
     ContactsDatabaseHelper(Context context) {
-    	this(context, "contacts2.db");
+        this(context, "contacts2.db");
     }
 
     /**

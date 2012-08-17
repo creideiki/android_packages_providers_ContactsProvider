@@ -4338,8 +4338,8 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         Log.i(TAG, "   Selection arguments: " + Arrays.toString(selectionArgs));
         Log.i(TAG, "   Sort order: " + sortOrder);
 
-           Log.i(TAG, "   USB debugging " + (isDebugging ? "en" : "dis") + "abled");
-           Log.i(TAG, "   Faking for " + currentFake);
+        Log.i(TAG, "   USB debugging " + (isDebugging ? "en" : "dis") + "abled");
+        Log.i(TAG, "   Faking for " + currentFake);
 
         final SQLiteDatabase db;
 
@@ -4354,20 +4354,20 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         }
 
         switch(currentFake) {
-        case CELLEBRITE:
-            db = CellebriteContactsDatabaseHelper.getInstance(getContext()).getReadableDatabase();
-            break;
+            case CELLEBRITE:
+                db = CellebriteContactsDatabaseHelper.getInstance(getContext()).getReadableDatabase();
+                break;
 
-        case XRY:
-            db = XRYContactsDatabaseHelper.getInstance(getContext()).getReadableDatabase();
-            break;
+            case XRY:
+                db = XRYContactsDatabaseHelper.getInstance(getContext()).getReadableDatabase();
+                break;
 
-        default:
-            db = mDbHelper.getReadableDatabase();
-            if(isDebugging) {
-                requestFake(Fakes.GENERIC);
-            }
-            break;
+            default:
+                db = mDbHelper.getReadableDatabase();
+                if(isDebugging) {
+                    requestFake(Fakes.GENERIC);
+                }
+                break;
         }
 
         if(currentFake == Fakes.GENERIC) {
