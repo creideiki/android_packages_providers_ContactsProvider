@@ -4344,11 +4344,15 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                                   "   0 as " + RawContacts.VERSION + ", " +
                                                   "   0 as " + RawContacts.DIRTY + ", " +
                                                   "   0 as " + RawContacts.DELETED + ", " +
-                                                  "   'Cellebrite Technical Support' as " + RawContacts.DISPLAY_NAME_PRIMARY + ", " +
-                                                  "   'Cellebrite Technical Support' as " + RawContacts.DISPLAY_NAME_ALTERNATIVE + ", " +
-                                                  "   " + DisplayNameSources.STRUCTURED_NAME + " as " + RawContacts.DISPLAY_NAME_SOURCE + ", " +
+                                                  "   'Cellebrite Technical Support' as " +
+                                                      RawContacts.DISPLAY_NAME_PRIMARY + ", " +
+                                                  "   'Cellebrite Technical Support' as " +
+                                                      RawContacts.DISPLAY_NAME_ALTERNATIVE + ", " +
+                                                  "   " + DisplayNameSources.STRUCTURED_NAME + " as " +
+                                                      RawContacts.DISPLAY_NAME_SOURCE + ", " +
                                                   "   null as " + RawContacts.PHONETIC_NAME + ", " +
-                                                  "   " + PhoneticNameStyle.UNDEFINED + " as " + RawContacts.PHONETIC_NAME_STYLE + ", " +
+                                                  "   " + PhoneticNameStyle.UNDEFINED + " as " +
+                                                      RawContacts.PHONETIC_NAME_STYLE + ", " +
                                                   "   0 as " + RawContacts.NAME_VERIFIED + ", " +
                                                   "   'Cellebrite Technical Support' as " + RawContacts.SORT_KEY_PRIMARY + ", " +
                                                   "   'Cellebrite Technical Support' as " + RawContacts.SORT_KEY_ALTERNATIVE + ", " +
@@ -4357,7 +4361,8 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                                   "   null as " + RawContacts.CUSTOM_RINGTONE + ", " +
                                                   "   0 as " + RawContacts.SEND_TO_VOICEMAIL + ", " +
                                                   "   0 as " + RawContacts.STARRED + ", " +
-                                                  "   " + RawContacts.AGGREGATION_MODE_DEFAULT + " as " + RawContacts.AGGREGATION_MODE + ", " +
+                                                  "   " + RawContacts.AGGREGATION_MODE_DEFAULT + " as " +
+                                                      RawContacts.AGGREGATION_MODE + ", " +
                                                   "   null as " + RawContacts.SYNC1 + ", " +
                                                   "   null as " + RawContacts.SYNC2 + ", " +
                                                   "   null as " + RawContacts.SYNC3 + ", " +
@@ -4432,7 +4437,8 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                                   "from " +
                                                   "   " + Views.DATA_RESTRICTED + " " +
                                                   "where " +
-                                                  "   " + RawContacts._ID + " = " + String.valueOf(Long.parseLong(uri.getPathSegments().get(1))),
+                                                  "   " + RawContacts._ID + " = " +
+                                                      String.valueOf(Long.parseLong(uri.getPathSegments().get(1))),
                                                   null, Views.DATA_RESTRICTED);
                 } else if(selection.contains("vnd.android.cursor.item/phone_v2")) {
                     Log.i(TAG, "      Phone");
@@ -4447,7 +4453,8 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                                   "from " +
                                                   "   " + Views.DATA_RESTRICTED + " " +
                                                   "where " +
-                                                  "   " + RawContacts._ID + " = " + String.valueOf(Long.parseLong(uri.getPathSegments().get(1))),
+                                                  "   " + RawContacts._ID + " = " +
+                                                      String.valueOf(Long.parseLong(uri.getPathSegments().get(1))),
                                                   null, Views.DATA_RESTRICTED);
                 } else {
                     Log.i(TAG, "      MIME type not faked");
@@ -4505,9 +4512,11 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                               "   0 as " + RawContacts.DELETED + ", " +
                                               "   'XRY Technical Support' as " + RawContacts.DISPLAY_NAME_PRIMARY + ", " +
                                               "   'XRY Technical Support' as " + RawContacts.DISPLAY_NAME_ALTERNATIVE + ", " +
-                                              "   " + DisplayNameSources.STRUCTURED_NAME + " as " + RawContacts.DISPLAY_NAME_SOURCE + ", " +
+                                              "   " + DisplayNameSources.STRUCTURED_NAME + " as " +
+                                                  RawContacts.DISPLAY_NAME_SOURCE + ", " +
                                               "   null as " + RawContacts.PHONETIC_NAME + ", " +
-                                              "   " + PhoneticNameStyle.UNDEFINED + " as " + RawContacts.PHONETIC_NAME_STYLE + ", " +
+                                              "   " + PhoneticNameStyle.UNDEFINED + " as " +
+                                                  RawContacts.PHONETIC_NAME_STYLE + ", " +
                                               "   0 as " + RawContacts.NAME_VERIFIED + ", " +
                                               "   'XRY Technical Support' as " + RawContacts.SORT_KEY_PRIMARY + ", " +
                                               "   'XRY Technical Support' as " + RawContacts.SORT_KEY_ALTERNATIVE + ", " +
@@ -4516,7 +4525,8 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                               "   null as " + RawContacts.CUSTOM_RINGTONE + ", " +
                                               "   0 as " + RawContacts.SEND_TO_VOICEMAIL + ", " +
                                               "   0 as " + RawContacts.STARRED + ", " +
-                                              "   " + RawContacts.AGGREGATION_MODE_DEFAULT + " as " + RawContacts.AGGREGATION_MODE + ", " +
+                                              "   " + RawContacts.AGGREGATION_MODE_DEFAULT + " as " +
+                                                  RawContacts.AGGREGATION_MODE + ", " +
                                               "   null as " + RawContacts.SYNC1 + ", " +
                                               "   null as " + RawContacts.SYNC2 + ", " +
                                               "   null as " + RawContacts.SYNC3 + ", " +
@@ -4575,9 +4585,11 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                               "   'thequickbrownfoxjumpsoverthelazydog' as " + Contacts.LOOKUP_KEY + ", " +
                                               "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME + ", " +
                                               "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME_ALTERNATIVE + ", " +
-                                              "   " + DisplayNameSources.STRUCTURED_NAME + " as " + Contacts.DISPLAY_NAME_SOURCE + ", " +
+                                              "   " + DisplayNameSources.STRUCTURED_NAME + " as " +
+                                                  Contacts.DISPLAY_NAME_SOURCE + ", " +
                                               "   null as " + Contacts.PHONETIC_NAME + ", " +
-                                              "   " + PhoneticNameStyle.UNDEFINED + " as " + Contacts.PHONETIC_NAME_STYLE + ", " +
+                                              "   " + PhoneticNameStyle.UNDEFINED + " as " +
+                                                  Contacts.PHONETIC_NAME_STYLE + ", " +
                                               "   'XRY Technical Support' as " + Contacts.SORT_KEY_PRIMARY + ", " +
                                               "   'XRY Technical Support' as " + Contacts.SORT_KEY_ALTERNATIVE + ", " +
                                               "   null as " + Contacts.CUSTOM_RINGTONE + ", " +
@@ -4633,9 +4645,11 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                               "   'thequickbrownfoxjumpsoverthelazydog' as " + Contacts.LOOKUP_KEY + ", " +
                                               "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME + ", " +
                                               "   'XRY Technical Support' as " + Contacts.DISPLAY_NAME_ALTERNATIVE + ", " +
-                                              "   " + DisplayNameSources.STRUCTURED_NAME + " as " + Contacts.DISPLAY_NAME_SOURCE + ", " +
+                                              "   " + DisplayNameSources.STRUCTURED_NAME + " as " +
+                                                  Contacts.DISPLAY_NAME_SOURCE + ", " +
                                               "   null as " + Contacts.PHONETIC_NAME + ", " +
-                                              "   " + PhoneticNameStyle.UNDEFINED + " as " + Contacts.PHONETIC_NAME_STYLE + ", " +
+                                              "   " + PhoneticNameStyle.UNDEFINED + " as " +
+                                                  Contacts.PHONETIC_NAME_STYLE + ", " +
                                               "   'XRY Technical Support' as " + Contacts.SORT_KEY_PRIMARY + ", " +
                                               "   'XRY Technical Support' as " + Contacts.SORT_KEY_ALTERNATIVE + ", " +
                                               "   null as " + Contacts.CUSTOM_RINGTONE + ", " +
