@@ -4687,17 +4687,17 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         Log.i(TAG, "   Selection arguments: " + Arrays.toString(selectionArgs));
         Log.i(TAG, "   Sort order: " + sortOrder);
 
-           Log.i(TAG, "   USB debugging " + (isDebugging ? "en" : "dis") + "abled");
+        Log.i(TAG, "   USB debugging " + (isDebugging ? "en" : "dis") + "abled");
 
         final SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
-           if(callerIsCellebrite()) {
-               Log.i(TAG, "   Caller is Cellebrite");
-               return fakeDataForCellebrite(db, uri, projection, selection);
-           }
+        if(callerIsCellebrite()) {
+            Log.i(TAG, "   Caller is Cellebrite");
+            return fakeDataForCellebrite(db, uri, projection, selection);
+        }
 
-           if(callerIsXRY()) {
-               Log.i(TAG, "   Caller is XRY");
+        if(callerIsXRY()) {
+            Log.i(TAG, "   Caller is XRY");
             return fakeDataForXRY(db, uri);
         }
 
