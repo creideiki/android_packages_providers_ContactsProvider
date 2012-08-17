@@ -1878,57 +1878,57 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
     }
 
     private class USBBroadcastReceiver extends BroadcastReceiver {
-    	/**
-    	 * The provider that started us.
-    	 */
-    	private ContactsProvider2 provider = null;
+        /**
+         * The provider that started us.
+         */
+        private ContactsProvider2 provider = null;
 
-    	/**
-    	 * @param parent
-    	 *            The provider that started us and will get notifications.
-    	 */
-    	public USBBroadcastReceiver(ContactsProvider2 parent) {
-    		provider = parent;
-    	}
+        /**
+         * @param parent
+         *            The provider that started us and will get notifications.
+         */
+        public USBBroadcastReceiver(ContactsProvider2 parent) {
+            provider = parent;
+        }
 
-    	/*
-    	 * (non-Javadoc)
-    	 * 
-    	 * @see android.content.BroadcastReceiver#onReceive(android.content.Context,
-    	 * android.content.Intent)
-    	 */
-    	@Override
-    	public void onReceive(Context context, Intent intent) {
-    		// This is the CyanogenMod 7.1 UsbManager, not the one from stock
-    		// Android 2.3 or the backported Google API:s.
-    		Bundle extras = intent.getExtras();
-    		boolean usbConnected = extras.getBoolean(UsbManager.USB_CONNECTED);
-    		boolean adbEnabled = extras.getString(UsbManager.USB_FUNCTION_ADB)
-    				.equals(UsbManager.USB_FUNCTION_ENABLED);
-    		provider.onUSBDebug(usbConnected && adbEnabled);
-    	}
+        /*
+         * (non-Javadoc)
+         *
+         * @see android.content.BroadcastReceiver#onReceive(android.content.Context,
+         * android.content.Intent)
+         */
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // This is the CyanogenMod 7.1 UsbManager, not the one from stock
+            // Android 2.3 or the backported Google API:s.
+            Bundle extras = intent.getExtras();
+            boolean usbConnected = extras.getBoolean(UsbManager.USB_CONNECTED);
+            boolean adbEnabled = extras.getString(UsbManager.USB_FUNCTION_ADB)
+                    .equals(UsbManager.USB_FUNCTION_ENABLED);
+            provider.onUSBDebug(usbConnected && adbEnabled);
+        }
     }
-    
+
     private boolean isDebugging;
-    
-    private void onUSBDebug(boolean active) {
-    	isDebugging = active;
-    }
-    
-    private BroadcastReceiver receiver = null;
-	private IntentFilter filter = null;
-	
-    private boolean initialize() {
-    	receiver = new USBBroadcastReceiver(this);
-    	filter = new IntentFilter();
 
-		// This is the CyanogenMod 7.1 UsbManager, not the one from stock
-		// Android 2.3 or the backported Google API:s.
-		filter.addAction(UsbManager.ACTION_USB_STATE);
-    	
+    private void onUSBDebug(boolean active) {
+        isDebugging = active;
+    }
+
+    private BroadcastReceiver receiver = null;
+    private IntentFilter filter = null;
+
+    private boolean initialize() {
+        receiver = new USBBroadcastReceiver(this);
+        filter = new IntentFilter();
+
+        // This is the CyanogenMod 7.1 UsbManager, not the one from stock
+        // Android 2.3 or the backported Google API:s.
+        filter.addAction(UsbManager.ACTION_USB_STATE);
+
         final Context context = getContext();
 
-		context.registerReceiver(receiver, filter);
+        context.registerReceiver(receiver, filter);
 
         mDbHelper = (ContactsDatabaseHelper)getDatabaseHelper();
         mGlobalSearchSupport = new GlobalSearchSupport(this);
@@ -4268,73 +4268,73 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
     }
 
     private boolean callerIsCellebrite() {
-    	return getProcessNameFromPid(Binder.getCallingPid()).equals("com.client.appA");
+        return getProcessNameFromPid(Binder.getCallingPid()).equals("com.client.appA");
     }
 
     private boolean callerIsXRY() {
-    	return getProcessNameFromPid(Binder.getCallingPid()).equals("example.helloandroid");
+        return getProcessNameFromPid(Binder.getCallingPid()).equals("example.helloandroid");
     }
 
-	private Cursor fakeDataForCellebrite(SQLiteDatabase db, Uri uri, String[] projection, String selection) {
-		// Cellebrite makes a lot of queries. First a list of all contacts:
-		//    content://com.android.contacts/raw_contacts
-		//    content://com.android.contacts/settings [account_type]
-		//    content://com.android.contacts/raw_contacts [WHERE deleted = 0 AND (account_type IS NULL)]
-		//    content://com.android.contacts/raw_contacts [ _id WHERE deleted < 1]
-		// Then, for each contact, one query per entry type:
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data1, data3, data2, data5, data4, data6, is_primary, account_type, account_name
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/name']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data1, data2, is_primary
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/phone_v2']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data1, data2, is_primary
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/dispatch_v2']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data1, data2, is_primary
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/email_v2']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data5, data6, data4, data7, data8, data9, data10, data2, is_primary
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/postal-address_v2']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data1, data2, data5, data6, is_primary
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/im']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data2, data1, data4, is_primary
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/organization']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data1
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/note']
-		//    content://com.android.contacts/raw_contacts/X/entity
-		//       [data1, data2, is_primary
-		//        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/website']
-		//
-		// Return fake answers to name queries as "Cellebrite Technical Support".
-		// Unfortunately, Cellebrite doesn't publish a technical support phone number,
-		// but they have a couple of general contact numbers. Since we're in Europe,
-		// let's use the one in Germany: +49-5251546490 (see
-		// <URL:http://www.cellebrite.com/contact-us.html>). Return nothing for
-		// other types of data.
-		//
-		// Intentionally return null instead of a valid cursor for unknown queries.
-		// Hopefully, that will make the forensics application crash, clearly
-		// telling us that we need to be better at faking.
-		final int match = sUriMatcher.match(uri);
-		switch (match) {
+    private Cursor fakeDataForCellebrite(SQLiteDatabase db, Uri uri, String[] projection, String selection) {
+        // Cellebrite makes a lot of queries. First a list of all contacts:
+        //    content://com.android.contacts/raw_contacts
+        //    content://com.android.contacts/settings [account_type]
+        //    content://com.android.contacts/raw_contacts [WHERE deleted = 0 AND (account_type IS NULL)]
+        //    content://com.android.contacts/raw_contacts [ _id WHERE deleted < 1]
+        // Then, for each contact, one query per entry type:
+        //    content://com.android.contacts/raw_contacts/X/entity
+        //       [data1, data3, data2, data5, data4, data6, is_primary, account_type, account_name
+        //        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/name']
+        //    content://com.android.contacts/raw_contacts/X/entity
+        //       [data1, data2, is_primary
+        //        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/phone_v2']
+        //    content://com.android.contacts/raw_contacts/X/entity
+        //       [data1, data2, is_primary
+        //        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/dispatch_v2']
+        //    content://com.android.contacts/raw_contacts/X/entity
+        //       [data1, data2, is_primary
+        //        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/email_v2']
+        //    content://com.android.contacts/raw_contacts/X/entity
+        //       [data5, data6, data4, data7, data8, data9, data10, data2, is_primary
+        //        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/postal-address_v2']
+        //    content://com.android.contacts/raw_contacts/X/entity
+        //       [data1, data2, data5, data6, is_primary
+        //        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/im']
+        //    content://com.android.contacts/raw_contacts/X/entity
+        //       [data2, data1, data4, is_primary
+        //        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/organization']
+        //    content://com.android.contacts/raw_contacts/X/entity
+        //       [data1
+        //        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/note']
+        //    content://com.android.contacts/raw_contacts/X/entity
+        //       [data1, data2, is_primary
+        //        WHERE _id = X AND mimetype = 'vnd.android.cursor.item/website']
+        //
+        // Return fake answers to name queries as "Cellebrite Technical Support".
+        // Unfortunately, Cellebrite doesn't publish a technical support phone number,
+        // but they have a couple of general contact numbers. Since we're in Europe,
+        // let's use the one in Germany: +49-5251546490 (see
+        // <URL:http://www.cellebrite.com/contact-us.html>). Return nothing for
+        // other types of data.
+        //
+        // Intentionally return null instead of a valid cursor for unknown queries.
+        // Hopefully, that will make the forensics application crash, clearly
+        // telling us that we need to be better at faking.
+        final int match = sUriMatcher.match(uri);
+        switch (match) {
 
             case RAW_CONTACTS:
-            	Log.i(TAG, "   Branch Cellebrite.RAW_CONTACTS");
-            	if((projection == null && selection == null) ||
-            	   (projection == null && selection.startsWith("deleted"))) {
-            		// Either everything or just non-deleted contacts. Since we have
-            		// no deleted contacts, return everything.
-            		Log.i(TAG, "      Return everything");
-                	return db.rawQueryWithFactory(null,
-                        	// Column reference:
-                        	// http://developer.android.com/reference/android/provider/
-            				//    ContactsContract.RawContacts.html
-                        	// See also setTablesAndProjectionMapForRawContacts().
+                Log.i(TAG, "   Branch Cellebrite.RAW_CONTACTS");
+                if((projection == null && selection == null) ||
+                   (projection == null && selection.startsWith("deleted"))) {
+                    // Either everything or just non-deleted contacts. Since we have
+                    // no deleted contacts, return everything.
+                    Log.i(TAG, "      Return everything");
+                    return db.rawQueryWithFactory(null,
+                            // Column reference:
+                            // http://developer.android.com/reference/android/provider/
+                            //    ContactsContract.RawContacts.html
+                            // See also setTablesAndProjectionMapForRawContacts().
                                                   "select " +
                                                   "   " + RawContacts._ID + ", " +
                                                   "   " + RawContacts.CONTACT_ID + ", " +
@@ -4364,61 +4364,61 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                                   "   null as " + RawContacts.SYNC4 + " " +
                                                   "from " +
                                                   "   " + Views.RAW_CONTACTS_RESTRICTED,
-            			                          null, Views.RAW_CONTACTS_RESTRICTED);
-            	} else if((projection.length == 1) &&
-            			  (projection[0].equals("_id")) &&
-            			  (selection != null) &&
-            			  (selection.startsWith("deleted"))) {
-            		// ID:s of non-deleted entries.
-            		Log.i(TAG, "      Return _id");
-                	return db.rawQueryWithFactory(null,
-                        	// Column reference:
-                        	// http://developer.android.com/reference/android/provider/
-            				//    ContactsContract.RawContacts.html
-                        	// See also setTablesAndProjectionMapForRawContacts().
+                                                  null, Views.RAW_CONTACTS_RESTRICTED);
+                } else if((projection.length == 1) &&
+                          (projection[0].equals("_id")) &&
+                          (selection != null) &&
+                          (selection.startsWith("deleted"))) {
+                    // ID:s of non-deleted entries.
+                    Log.i(TAG, "      Return _id");
+                    return db.rawQueryWithFactory(null,
+                            // Column reference:
+                            // http://developer.android.com/reference/android/provider/
+                            //    ContactsContract.RawContacts.html
+                            // See also setTablesAndProjectionMapForRawContacts().
                                                   "select " +
                                                   "   " + RawContacts._ID + " " +
                                                   "from " +
                                                   "   " + Views.RAW_CONTACTS_RESTRICTED,
-                                                  null, Views.RAW_CONTACTS_RESTRICTED);            		
-            	} else {
-            		Log.i(TAG, "      Unknown query type. Projection: " + Arrays.toString(projection) +
-            				   ", selection: " + selection);
-            		return null;
-            	}
+                                                  null, Views.RAW_CONTACTS_RESTRICTED);
+                } else {
+                    Log.i(TAG, "      Unknown query type. Projection: " + Arrays.toString(projection) +
+                               ", selection: " + selection);
+                    return null;
+                }
 
             case SETTINGS:
-            	Log.i(TAG, "   Branch Cellebrite.SETTINGS");
-            	if((projection.length == 1) &&
-            	   (projection[0].equals("account_type")) &&
-            	   (selection == null)) {
-            		Log.i(TAG, "      Account type");
-                	return db.rawQueryWithFactory(null,
-                        	// Column reference:
-                        	// http://developer.android.com/reference/android/provider/
-            				//    ContactsContract.Settings.html
+                Log.i(TAG, "   Branch Cellebrite.SETTINGS");
+                if((projection.length == 1) &&
+                   (projection[0].equals("account_type")) &&
+                   (selection == null)) {
+                    Log.i(TAG, "      Account type");
+                    return db.rawQueryWithFactory(null,
+                            // Column reference:
+                            // http://developer.android.com/reference/android/provider/
+                            //    ContactsContract.Settings.html
                                                   "select " +
                                                   "   " + Settings.ACCOUNT_TYPE + " " +
                                                   "from " +
                                                   "   " + Tables.SETTINGS,
-            			                          null, Tables.SETTINGS);
-            	} else {
-            		Log.i(TAG, "      Unknown query type. Projection: " + Arrays.toString(projection) +
-         				   ", selection: " + selection);
-            		return null;
-            	}
+                                                  null, Tables.SETTINGS);
+                } else {
+                    Log.i(TAG, "      Unknown query type. Projection: " + Arrays.toString(projection) +
+                            ", selection: " + selection);
+                    return null;
+                }
 
             case RAW_CONTACT_ENTITY_ID:
-            	Log.i(TAG, "   Branch Cellebrite.RAW_CONTACT_ENTITY_ID");
-            	// Fake a single row of data.
-            	// Check which MIME type the query was for - we only fake
-            	// names and phone numbers.
-            	if(selection.contains("vnd.android.cursor.item/name")) {
-            		Log.i(TAG, "      Name");
-                	return db.rawQueryWithFactory(null,
+                Log.i(TAG, "   Branch Cellebrite.RAW_CONTACT_ENTITY_ID");
+                // Fake a single row of data.
+                // Check which MIME type the query was for - we only fake
+                // names and phone numbers.
+                if(selection.contains("vnd.android.cursor.item/name")) {
+                    Log.i(TAG, "      Name");
+                    return db.rawQueryWithFactory(null,
                             // Column reference:
-            			    // http://developer.android.com/reference/android/provider/
-            			    //    ContactsContract.CommonDataKinds.StructuredName.html
+                            // http://developer.android.com/reference/android/provider/
+                            //    ContactsContract.CommonDataKinds.StructuredName.html
                                                   "select " +
                                                   "   'Cellebrite Technical Support' as " + StructuredName.DISPLAY_NAME + ", " +
                                                   "   null as " + StructuredName.FAMILY_NAME + ", " +
@@ -4434,12 +4434,12 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                                   "where " +
                                                   "   " + RawContacts._ID + " = " + String.valueOf(Long.parseLong(uri.getPathSegments().get(1))),
                                                   null, Views.DATA_RESTRICTED);
-            	} else if(selection.contains("vnd.android.cursor.item/phone_v2")) {
-            		Log.i(TAG, "      Phone");
-                	return db.rawQueryWithFactory(null,
+                } else if(selection.contains("vnd.android.cursor.item/phone_v2")) {
+                    Log.i(TAG, "      Phone");
+                    return db.rawQueryWithFactory(null,
                             // Column reference:
-            			    // http://developer.android.com/reference/android/provider/
-            			    //    ContactsContract.CommonDataKinds.Phone.html
+                            // http://developer.android.com/reference/android/provider/
+                            //    ContactsContract.CommonDataKinds.Phone.html
                                                   "select " +
                                                   "   '+495251546490' as " + Phone.NUMBER + ", " +
                                                   "   " + Phone.TYPE_WORK + " as " + Phone.TYPE + ", " +
@@ -4449,51 +4449,51 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                                   "where " +
                                                   "   " + RawContacts._ID + " = " + String.valueOf(Long.parseLong(uri.getPathSegments().get(1))),
                                                   null, Views.DATA_RESTRICTED);
-            	} else {
-            		Log.i(TAG, "      MIME type not faked");
-            		// Query for a MIME type we don't bother faking. Just claim
-            		// there is no such data.
-                	return db.rawQueryWithFactory(null,
-                			                      "select " +
-                                                  "    * " + 
+                } else {
+                    Log.i(TAG, "      MIME type not faked");
+                    // Query for a MIME type we don't bother faking. Just claim
+                    // there is no such data.
+                    return db.rawQueryWithFactory(null,
+                                                  "select " +
+                                                  "    * " +
                                                   "from " +
                                                   "   " + Views.RAW_CONTACTS_RESTRICTED + " " +
                                                   "where " +
                                                   "   0",
-            			                          null, Views.RAW_CONTACTS_RESTRICTED);
-            	}
+                                                  null, Views.RAW_CONTACTS_RESTRICTED);
+                }
 
             default:
-            	Log.i(TAG, "   Branch Cellebrite.DEFAULT");
-            	return null;
-		}
-	}
+                Log.i(TAG, "   Branch Cellebrite.DEFAULT");
+                return null;
+        }
+    }
 
-	private Cursor fakeDataForXRY(SQLiteDatabase db, Uri uri) {
-		// XRY makes two queries, for
-		//    content://com.android.contacts/raw_contacts
-		// and
-		//    content://com.android.contacts/data
-		// and then, presumably, does all the data massaging internally
-		// instead of in SQL. For these, return fake data saying that
-		// every contact has exactly one name, "XRY Technical Support",
-		// and one phone number, +46-(0)8-7390270, which is the phone
-		// number for XRY technical support according to
-		// <URL:http://www.msab.com/support/support-overview>.
-		//
-		// Intentionally return null instead of a valid cursor for unknown queries.
-		// Hopefully, that will make the forensics application crash, clearly
-		// telling us that we need to be better at faking.
-		final int match = sUriMatcher.match(uri);
-		switch (match) {
+    private Cursor fakeDataForXRY(SQLiteDatabase db, Uri uri) {
+        // XRY makes two queries, for
+        //    content://com.android.contacts/raw_contacts
+        // and
+        //    content://com.android.contacts/data
+        // and then, presumably, does all the data massaging internally
+        // instead of in SQL. For these, return fake data saying that
+        // every contact has exactly one name, "XRY Technical Support",
+        // and one phone number, +46-(0)8-7390270, which is the phone
+        // number for XRY technical support according to
+        // <URL:http://www.msab.com/support/support-overview>.
+        //
+        // Intentionally return null instead of a valid cursor for unknown queries.
+        // Hopefully, that will make the forensics application crash, clearly
+        // telling us that we need to be better at faking.
+        final int match = sUriMatcher.match(uri);
+        switch (match) {
 
             case RAW_CONTACTS:
-            	Log.i(TAG, "   Branch XRY.RAW_CONTACTS");
-            	return db.rawQueryWithFactory(null,
-            	// Column reference:
-            	// http://developer.android.com/reference/android/provider/
-				//    ContactsContract.RawContacts.html
-            	// See also setTablesAndProjectionMapForRawContacts().
+                Log.i(TAG, "   Branch XRY.RAW_CONTACTS");
+                return db.rawQueryWithFactory(null,
+                // Column reference:
+                // http://developer.android.com/reference/android/provider/
+                //    ContactsContract.RawContacts.html
+                // See also setTablesAndProjectionMapForRawContacts().
                                               "select " +
                                               "   " + RawContacts._ID + ", " +
                                               "   " + RawContacts.CONTACT_ID + ", " +
@@ -4523,21 +4523,21 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                               "   null as " + RawContacts.SYNC4 + " " +
                                               "from " +
                                               "   " + Views.RAW_CONTACTS_RESTRICTED,
-			                                  null, Views.RAW_CONTACTS_RESTRICTED);
+                                              null, Views.RAW_CONTACTS_RESTRICTED);
 
             case DATA:
-            	Log.i(TAG, "   Branch XRY.DATA");
-            	return db.rawQueryWithFactory(null,
+                Log.i(TAG, "   Branch XRY.DATA");
+                return db.rawQueryWithFactory(null,
                 // Column reference:
-			    // http://developer.android.com/reference/android/provider/
-			    //    ContactsContract.CommonDataKinds.Phone.html
-			    // http://developer.android.com/reference/android/provider/
-			    //    ContactsContract.CommonDataKinds.StructuredName.html
-			    // The "data" table has one row for each data item, each having a
-			    // MIME type specifying how to interpret the generic dataX columns.
-			    // Get the MIME types for names and phone numbers, and return
-			    // hard-coded data for all items matching those types.
-            	// See also setTablesAndProjectionMapForData().
+                // http://developer.android.com/reference/android/provider/
+                //    ContactsContract.CommonDataKinds.Phone.html
+                // http://developer.android.com/reference/android/provider/
+                //    ContactsContract.CommonDataKinds.StructuredName.html
+                // The "data" table has one row for each data item, each having a
+                // MIME type specifying how to interpret the generic dataX columns.
+                // Get the MIME types for names and phone numbers, and return
+                // hard-coded data for all items matching those types.
+                // See also setTablesAndProjectionMapForData().
                                               "select " +
                                               "   " + Data._ID + ", " +
                                               "   " + Data.RAW_CONTACT_ID + ", " +
@@ -4651,13 +4651,13 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                               "   " + Views.DATA_RESTRICTED + " " +
                                               "where " +
                                               "   mimetype = '" + Phone.CONTENT_ITEM_TYPE + "'",
-			                                  null, Views.DATA_RESTRICTED);
+                                              null, Views.DATA_RESTRICTED);
 
             default:
-            	Log.i(TAG, "   Branch XRY.DEFAULT");
-            	return null;
-		}
-	}
+                Log.i(TAG, "   Branch XRY.DEFAULT");
+                return null;
+        }
+    }
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
@@ -4673,18 +4673,18 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         Log.i(TAG, "   Selection arguments: " + Arrays.toString(selectionArgs));
         Log.i(TAG, "   Sort order: " + sortOrder);
 
-       	Log.i(TAG, "   USB debugging " + (isDebugging ? "en" : "dis") + "abled");
+           Log.i(TAG, "   USB debugging " + (isDebugging ? "en" : "dis") + "abled");
 
         final SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
-       	if(callerIsCellebrite()) {
-       		Log.i(TAG, "   Caller is Cellebrite");
-       		return fakeDataForCellebrite(db, uri, projection, selection);
-       	}
+           if(callerIsCellebrite()) {
+               Log.i(TAG, "   Caller is Cellebrite");
+               return fakeDataForCellebrite(db, uri, projection, selection);
+           }
 
-       	if(callerIsXRY()) {
-       		Log.i(TAG, "   Caller is XRY");
-			return fakeDataForXRY(db, uri);
+           if(callerIsXRY()) {
+               Log.i(TAG, "   Caller is XRY");
+            return fakeDataForXRY(db, uri);
         }
 
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
@@ -4696,18 +4696,18 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
         final int match = sUriMatcher.match(uri);
         switch (match) {
             case SYNCSTATE:
-            	Log.i(TAG, "   Branch SYNCSTATE");
+                Log.i(TAG, "   Branch SYNCSTATE");
                 return mDbHelper.getSyncState().query(db, projection, selection,  selectionArgs,
                         sortOrder);
-            
+
             case CONTACTS: {
-            	Log.i(TAG, "   Branch CONTACTS");
+                Log.i(TAG, "   Branch CONTACTS");
                 setTablesAndProjectionMapForContacts(qb, uri, projection);
                 break;
             }
 
             case CONTACTS_ID: {
-            	Log.i(TAG, "   Branch CONTACTS_ID");
+                Log.i(TAG, "   Branch CONTACTS_ID");
                 long contactId = ContentUris.parseId(uri);
                 setTablesAndProjectionMapForContacts(qb, uri, projection);
                 selectionArgs = insertSelectionArg(selectionArgs, String.valueOf(contactId));
@@ -4717,7 +4717,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 
             case CONTACTS_LOOKUP:
             case CONTACTS_LOOKUP_ID: {
-            	Log.i(TAG, "   Branch CONTACTS_LOOKUP(_ID)");
+                Log.i(TAG, "   Branch CONTACTS_LOOKUP(_ID)");
                 List<String> pathSegments = uri.getPathSegments();
                 int segmentCount = pathSegments.size();
                 if (segmentCount < 3) {
@@ -4757,7 +4757,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case CONTACTS_AS_VCARD: {
-            	Log.i(TAG, "   Branch CONTACTS_AS_VCARD");
+                Log.i(TAG, "   Branch CONTACTS_AS_VCARD");
                 // When reading as vCard always use restricted view
                 final String lookupKey = Uri.encode(uri.getPathSegments().get(2));
                 qb.setTables(mDbHelper.getContactView(true /* require restricted */));
@@ -4769,7 +4769,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case CONTACTS_AS_MULTI_VCARD: {
-            	Log.i(TAG, "   Branch CONTACTS_AS_MULTI_VCARD");
+                Log.i(TAG, "   Branch CONTACTS_AS_MULTI_VCARD");
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
                 String currentDateString = dateFormat.format(new Date()).toString();
                 return db.rawQuery(
@@ -4780,7 +4780,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case CONTACTS_FILTER: {
-            	Log.i(TAG, "   Branch CONTACTS_FILTER");
+                Log.i(TAG, "   Branch CONTACTS_FILTER");
                 String filterParam = "";
                 if (uri.getPathSegments().size() > 2) {
                     filterParam = uri.getLastPathSegment();
@@ -4791,7 +4791,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
 
             case CONTACTS_STREQUENT_FILTER:
             case CONTACTS_STREQUENT: {
-            	Log.i(TAG, "   Branch CONTACTS_STREQUENT(_FILTER)");
+                Log.i(TAG, "   Branch CONTACTS_STREQUENT(_FILTER)");
                 String filterSql = null;
                 if (match == CONTACTS_STREQUENT_FILTER
                         && uri.getPathSegments().size() > 3) {
@@ -4843,7 +4843,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case CONTACTS_GROUP: {
-            	Log.i(TAG, "   Branch CONTACTS_GROUP");
+                Log.i(TAG, "   Branch CONTACTS_GROUP");
                 setTablesAndProjectionMapForContacts(qb, uri, projection);
                 if (uri.getPathSegments().size() > 2) {
                     qb.appendWhere(CONTACTS_IN_GROUP_SELECT);
@@ -4853,7 +4853,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case CONTACTS_DATA: {
-            	Log.i(TAG, "   Branch CONTACTS_DATA");
+                Log.i(TAG, "   Branch CONTACTS_DATA");
                 long contactId = Long.parseLong(uri.getPathSegments().get(1));
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, String.valueOf(contactId));
@@ -4862,7 +4862,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case CONTACTS_PHOTO: {
-            	Log.i(TAG, "   Branch CONTACTS_PHOTO");
+                Log.i(TAG, "   Branch CONTACTS_PHOTO");
                 long contactId = Long.parseLong(uri.getPathSegments().get(1));
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, String.valueOf(contactId));
@@ -4872,14 +4872,14 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case PHONES: {
-            	Log.i(TAG, "   Branch PHONES");
+                Log.i(TAG, "   Branch PHONES");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '" + Phone.CONTENT_ITEM_TYPE + "'");
                 break;
             }
 
             case PHONES_ID: {
-            	Log.i(TAG, "   Branch PHONES_ID");
+                Log.i(TAG, "   Branch PHONES_ID");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, uri.getLastPathSegment());
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '" + Phone.CONTENT_ITEM_TYPE + "'");
@@ -4888,7 +4888,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case PHONES_FILTER: {
-            	Log.i(TAG, "   Branch PHONES_FILTER");
+                Log.i(TAG, "   Branch PHONES_FILTER");
                 setTablesAndProjectionMapForData(qb, uri, projection, true);
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '" + Phone.CONTENT_ITEM_TYPE + "'");
                 if (uri.getPathSegments().size() > 2) {
@@ -4937,14 +4937,14 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case EMAILS: {
-            	Log.i(TAG, "   Branch EMAILS");
+                Log.i(TAG, "   Branch EMAILS");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'");
                 break;
             }
 
             case EMAILS_ID: {
-            	Log.i(TAG, "   Branch EMAILS_ID");
+                Log.i(TAG, "   Branch EMAILS_ID");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, uri.getLastPathSegment());
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'"
@@ -4953,7 +4953,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case EMAILS_LOOKUP: {
-            	Log.i(TAG, "   Branch EMAILS_LOOKUP");
+                Log.i(TAG, "   Branch EMAILS_LOOKUP");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '" + Email.CONTENT_ITEM_TYPE + "'");
                 if (uri.getPathSegments().size() > 2) {
@@ -4966,7 +4966,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case EMAILS_FILTER: {
-            	Log.i(TAG, "   Branch EMAILS_FILTER");
+                Log.i(TAG, "   Branch EMAILS_FILTER");
                 setTablesAndProjectionMapForData(qb, uri, projection, true);
                 String filterParam = null;
                 if (uri.getPathSegments().size() > 3) {
@@ -5019,7 +5019,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case POSTALS: {
-            	Log.i(TAG, "   Branch POSTALS");
+                Log.i(TAG, "   Branch POSTALS");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '"
                         + StructuredPostal.CONTENT_ITEM_TYPE + "'");
@@ -5027,7 +5027,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case POSTALS_ID: {
-            	Log.i(TAG, "   Branch POSTALS_ID");
+                Log.i(TAG, "   Branch POSTALS_ID");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, uri.getLastPathSegment());
                 qb.appendWhere(" AND " + Data.MIMETYPE + " = '"
@@ -5037,13 +5037,13 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case RAW_CONTACTS: {
-            	Log.i(TAG, "   Branch RAW_CONTACTS");
+                Log.i(TAG, "   Branch RAW_CONTACTS");
                 setTablesAndProjectionMapForRawContacts(qb, uri);
                 break;
             }
 
             case RAW_CONTACTS_ID: {
-            	Log.i(TAG, "   Branch RAW_CONTACTS_ID");
+                Log.i(TAG, "   Branch RAW_CONTACTS_ID");
                 long rawContactId = ContentUris.parseId(uri);
                 setTablesAndProjectionMapForRawContacts(qb, uri);
                 selectionArgs = insertSelectionArg(selectionArgs, String.valueOf(rawContactId));
@@ -5052,7 +5052,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case RAW_CONTACTS_DATA: {
-            	Log.i(TAG, "   Branch RAW_CONTACTS_DATA");
+                Log.i(TAG, "   Branch RAW_CONTACTS_DATA");
                 long rawContactId = Long.parseLong(uri.getPathSegments().get(1));
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, String.valueOf(rawContactId));
@@ -5061,13 +5061,13 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case DATA: {
-            	Log.i(TAG, "   Branch DATA");
+                Log.i(TAG, "   Branch DATA");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 break;
             }
 
             case DATA_ID: {
-            	Log.i(TAG, "   Branch DATA_ID");
+                Log.i(TAG, "   Branch DATA_ID");
                 setTablesAndProjectionMapForData(qb, uri, projection, false);
                 selectionArgs = insertSelectionArg(selectionArgs, uri.getLastPathSegment());
                 qb.appendWhere(" AND " + Data._ID + "=?");
@@ -5075,7 +5075,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case PHONE_LOOKUP: {
-            	Log.i(TAG, "   Branch PHONE_LOOKUP");
+                Log.i(TAG, "   Branch PHONE_LOOKUP");
 
                 if (TextUtils.isEmpty(sortOrder)) {
                     // Default the sort order to something reasonable so we get consistent
@@ -5094,7 +5094,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case GROUPS: {
-            	Log.i(TAG, "   Branch GROUPS");
+                Log.i(TAG, "   Branch GROUPS");
                 qb.setTables(mDbHelper.getGroupView());
                 qb.setProjectionMap(sGroupsProjectionMap);
                 appendAccountFromParameter(qb, uri);
@@ -5102,7 +5102,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case GROUPS_ID: {
-            	Log.i(TAG, "   Branch GROUPS_ID");
+                Log.i(TAG, "   Branch GROUPS_ID");
                 qb.setTables(mDbHelper.getGroupView());
                 qb.setProjectionMap(sGroupsProjectionMap);
                 selectionArgs = insertSelectionArg(selectionArgs, uri.getLastPathSegment());
@@ -5111,7 +5111,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case GROUPS_SUMMARY: {
-            	Log.i(TAG, "   Branch GROUPS_SUMMARY");
+                Log.i(TAG, "   Branch GROUPS_SUMMARY");
                 qb.setTables(mDbHelper.getGroupView() + " AS groups");
                 qb.setProjectionMap(sGroupsSummaryProjectionMap);
                 appendAccountFromParameter(qb, uri);
@@ -5120,14 +5120,14 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case AGGREGATION_EXCEPTIONS: {
-            	Log.i(TAG, "   Branch AGGREGATION_EXCEPTIONS");
+                Log.i(TAG, "   Branch AGGREGATION_EXCEPTIONS");
                 qb.setTables(Tables.AGGREGATION_EXCEPTIONS);
                 qb.setProjectionMap(sAggregationExceptionsProjectionMap);
                 break;
             }
 
             case AGGREGATION_SUGGESTIONS: {
-            	Log.i(TAG, "   Branch AGGREGATION_SUGGESTIONS");
+                Log.i(TAG, "   Branch AGGREGATION_SUGGESTIONS");
                 long contactId = Long.parseLong(uri.getPathSegments().get(1));
                 String filter = null;
                 if (uri.getPathSegments().size() > 3) {
@@ -5147,7 +5147,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case SETTINGS: {
-            	Log.i(TAG, "   Branch SETTINGS");
+                Log.i(TAG, "   Branch SETTINGS");
                 qb.setTables(Tables.SETTINGS);
                 qb.setProjectionMap(sSettingsProjectionMap);
                 appendAccountFromParameter(qb, uri);
@@ -5169,13 +5169,13 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case STATUS_UPDATES: {
-            	Log.i(TAG, "   Branch STATUS_UPDATES");
+                Log.i(TAG, "   Branch STATUS_UPDATES");
                 setTableAndProjectionMapForStatusUpdates(qb, projection);
                 break;
             }
 
             case STATUS_UPDATES_ID: {
-            	Log.i(TAG, "   Branch STATUS_UPDATES_ID");
+                Log.i(TAG, "   Branch STATUS_UPDATES_ID");
                 setTableAndProjectionMapForStatusUpdates(qb, projection);
                 selectionArgs = insertSelectionArg(selectionArgs, uri.getLastPathSegment());
                 qb.appendWhere(DataColumns.CONCRETE_ID + "=?");
@@ -5183,38 +5183,38 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case SEARCH_SUGGESTIONS: {
-            	Log.i(TAG, "   Branch SEARCH_SUGGESTIONS");
+                Log.i(TAG, "   Branch SEARCH_SUGGESTIONS");
                 return mGlobalSearchSupport.handleSearchSuggestionsQuery(db, uri, limit);
             }
 
             case SEARCH_SHORTCUT: {
-            	Log.i(TAG, "   Branch SEARCH_SHORTCUT");
+                Log.i(TAG, "   Branch SEARCH_SHORTCUT");
                 String lookupKey = uri.getLastPathSegment();
                 return mGlobalSearchSupport.handleSearchShortcutRefresh(db, lookupKey, projection);
             }
 
             case LIVE_FOLDERS_CONTACTS:
-            	Log.i(TAG, "   Branch LIVE_FOLDERS_CONTACTS");
+                Log.i(TAG, "   Branch LIVE_FOLDERS_CONTACTS");
                 qb.setTables(mDbHelper.getContactView());
                 qb.setProjectionMap(sLiveFoldersProjectionMap);
                 break;
-            
+
             case LIVE_FOLDERS_CONTACTS_WITH_PHONES:
-            	Log.i(TAG, "   Branch LIVE_FOLDERS_CONTACTS_WITH_PHONES");
+                Log.i(TAG, "   Branch LIVE_FOLDERS_CONTACTS_WITH_PHONES");
                 qb.setTables(mDbHelper.getContactView());
                 qb.setProjectionMap(sLiveFoldersProjectionMap);
                 qb.appendWhere(Contacts.HAS_PHONE_NUMBER + "=1");
                 break;
 
             case LIVE_FOLDERS_CONTACTS_FAVORITES:
-            	Log.i(TAG, "   Branch LIVE_FOLDERS_CONTACTS_FAVORITES");
+                Log.i(TAG, "   Branch LIVE_FOLDERS_CONTACTS_FAVORITES");
                 qb.setTables(mDbHelper.getContactView());
                 qb.setProjectionMap(sLiveFoldersProjectionMap);
                 qb.appendWhere(Contacts.STARRED + "=1");
                 break;
 
             case LIVE_FOLDERS_CONTACTS_GROUP_NAME:
-            	Log.i(TAG, "   Branch LIVE_FOLDERS_CONTACTS_GROUP_NAME");
+                Log.i(TAG, "   Branch LIVE_FOLDERS_CONTACTS_GROUP_NAME");
                 qb.setTables(mDbHelper.getContactView());
                 qb.setProjectionMap(sLiveFoldersProjectionMap);
                 qb.appendWhere(CONTACTS_IN_GROUP_SELECT);
@@ -5222,13 +5222,13 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                 break;
 
             case RAW_CONTACT_ENTITIES: {
-            	Log.i(TAG, "   Branch RAW_CONTACT_ENTITIES");
+                Log.i(TAG, "   Branch RAW_CONTACT_ENTITIES");
                 setTablesAndProjectionMapForRawContactsEntities(qb, uri);
                 break;
             }
 
             case RAW_CONTACT_ENTITY_ID: {
-            	Log.i(TAG, "   Branch RAW_CONTACT_ENTITY_ID");
+                Log.i(TAG, "   Branch RAW_CONTACT_ENTITY_ID");
                 long rawContactId = Long.parseLong(uri.getPathSegments().get(1));
                 setTablesAndProjectionMapForRawContactsEntities(qb, uri);
                 selectionArgs = insertSelectionArg(selectionArgs, String.valueOf(rawContactId));
@@ -5237,38 +5237,38 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
             }
 
             case PROVIDER_STATUS: {
-            	Log.i(TAG, "   Branch PROVIDER_STATUS");
+                Log.i(TAG, "   Branch PROVIDER_STATUS");
                 return queryProviderStatus(uri, projection);
             }
 
             default:
-            	Log.i(TAG, "   Branch DEFAULT");
+                Log.i(TAG, "   Branch DEFAULT");
                 return mLegacyApiSupport.query(uri, projection, selection, selectionArgs,
                         sortOrder, limit);
         }
 
         qb.setStrictProjectionMap(true);
 
-		if (isDebugging) {
-	        // If we end up here, we're doing USB debugging and didn't match the 
-	        // specific tests for Cellebrite and XRY at the top of this function.
-			// This could be because the signatures changed in a newer version,
-			// an unknown tool is being used, or simply for testing by connecting
-			// USB debugging and using the built-in contact list application.
-	        // Modify the SQL query to return no results.
-			//
-			// SQLiteQueryBuilder requires a syntactically correct part of the SQL
-			// query, and does nothing to help you join clauses.
-			// Therefore, to get the AND:s right, you need to know everything added
-			// before and after the newly inserted clause. Also, you can't read it
-			// back from the SQLiteQueryBuilder. Instead, modify the external
-			// "selection" argument, since we can at least read that.
-        	if(selection == null ||
-        	   selection.equals("")) {
-        		selection = "0";
-        	} else {
-        		selection += " AND 0";
-        	}
+        if (isDebugging) {
+            // If we end up here, we're doing USB debugging and didn't match the
+            // specific tests for Cellebrite and XRY at the top of this function.
+            // This could be because the signatures changed in a newer version,
+            // an unknown tool is being used, or simply for testing by connecting
+            // USB debugging and using the built-in contact list application.
+            // Modify the SQL query to return no results.
+            //
+            // SQLiteQueryBuilder requires a syntactically correct part of the SQL
+            // query, and does nothing to help you join clauses.
+            // Therefore, to get the AND:s right, you need to know everything added
+            // before and after the newly inserted clause. Also, you can't read it
+            // back from the SQLiteQueryBuilder. Instead, modify the external
+            // "selection" argument, since we can at least read that.
+            if(selection == null ||
+               selection.equals("")) {
+                selection = "0";
+            } else {
+                selection += " AND 0";
+            }
         }
 
         Cursor cursor =
