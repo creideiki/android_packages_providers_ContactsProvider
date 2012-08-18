@@ -4574,7 +4574,7 @@ public class ContactsProvider2 extends SQLiteContentProvider implements OnAccoun
                                               "   null as " + StructuredName.SYNC1 + ", " +
                                               "   null as " + StructuredName.SYNC2 + ", " +
                                               "   null as " + StructuredName.SYNC3 + ", " +
-                                              "   null as " + StructuredName.SYNC4 +
+                                              "   null as " + StructuredName.SYNC4 + ", " +
                                               "   " + Data.CONTACT_ID + ", " +
                                               "   null as " + RawContacts.ACCOUNT_NAME + ", " +
                                               "   null as " + RawContacts.ACCOUNT_TYPE + ", " +
